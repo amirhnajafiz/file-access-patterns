@@ -8,11 +8,11 @@ set -eu
 print_usage() {
   cat <<EOF
 Usage:
-  $0 -c "command" -o output     # run bpftrace with -c (ctrace.bt)
-  $0 -p pid -o output           # attach bpftrace to pid (ptrace.bt)
+  $0 -c "command" -o output     # run bpftrace with -c (bpftrace/ctrace.bt)
+  $0 -p pid -o output           # attach bpftrace to pid (bpftrace/ptrace.bt)
 Notes:
   - If both -c and -p are provided, -c takes priority.
-  - Requires bpftrace and the scripts ctrace.bt / ptrace.bt to exist in
+  - Requires bpftrace and the scripts bpftrace/ctrace.bt / bpftrace/ptrace.bt to exist in
     the current working directory (or edit paths in the script).
 EOF
 }
@@ -58,11 +58,11 @@ ensure_script() {
 
 # decide what to run
 if [ -n "$cmd" ]; then
-  ensure_script "ctrace.bt"
-  printf "Running: bpftrace -c %s ctrace.bt > %s\n" "'$cmd'" "$out"
+  ensure_script "bpftrace/ctrace.bt"
+  printf "Running: bpftrace -c %s bpftrace/ctrace.bt > %s\n" "'$cmd'" "$out"
   # Use exec so the shell is replaced by bpftrace (optional). We capture exit code.
   # Quoting $cmd carefully so it's passed as a single argument to -c.
-  bpftrace -c "$cmd" ctrace.bt > "$out"
+  bpftrace -c "$cmd" bpftrace/ctrace.bt > "$out"
   rc=$?
   if [ $rc -ne 0 ]; then
     printf "bpftrace exited with code %d\n" "$rc" >&2
@@ -70,14 +70,14 @@ if [ -n "$cmd" ]; then
   exit $rc
 
 elif [ -n "$pid" ]; then
-  ensure_script "ptrace.bt"
+  ensure_script "bpftrace/ptrace.bt"
   # Validate pid is numeric
   case $pid in
     ''|*[!0-9]*) printf "Error: pid must be a positive integer.\n" >&2; exit 2 ;;
   esac
 
-  printf "Running: bpftrace -p %s ptrace.bt > %s\n" "$pid" "$out"
-  bpftrace ptrace.bt "$pid" > "$out"
+  printf "Running: bpftrace -p %s bpftrace/ptrace.bt > %s\n" "$pid" "$out"
+  bpftrace bpftrace/ptrace.bt "$pid" > "$out"
   rc=$?
   if [ $rc -ne 0 ]; then
     printf "bpftrace exited with code %d\n" "$rc" >&2
@@ -89,4 +89,3 @@ else
   print_usage
   exit 2
 fi
-
