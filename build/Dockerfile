@@ -17,5 +17,8 @@ WORKDIR /usr/local/app
 # Copy the files into the working directory
 COPY . .
 
+# Set executable permissions for the trace script
+RUN chmod +x /usr/local/app/trace.sh
+
 # Default command
 CMD ["/bin/bash"]
