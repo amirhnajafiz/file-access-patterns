@@ -1,0 +1,6 @@
+.git/
+build/
+tests/
+
+Makefile
+README.md
