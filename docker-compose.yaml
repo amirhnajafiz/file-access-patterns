@@ -1,0 +1,33 @@
+version: '3.8'
+services:
+  trace-help:
+    build:
+      context: ./src
+      dockerfile: ../build/Dockerfile
+    image: file-access-patterns:test
+    entrypoint: ["/usr/local/app/trace.sh"]
+    command: ["-h"]
+
+  e2e:
+    build:
+      context: ./src
+      dockerfile: ../build/Dockerfile
+    image: file-access-patterns:test
+    privileged: true
+    network_mode: host
+    pid: host
+    user: root
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - /lib/modules:/lib/modules:ro
+      - /sys/kernel/debug:/sys/kernel/debug:rw
+      - /usr/src:/usr/src:ro
+      - ./tests/logs:/logs:rw
+    entrypoint: ["/usr/local/app/trace.sh"]
+    command: ["-c", "ls", "-o", "/logs/trace_ls.txt"]
+
+volumes:
+  logs:
