@@ -1,0 +1,21 @@
+# Use official Ubuntu 24.04 as base image
+FROM ubuntu:24.04
+
+# Install ebpf (bpftrace) dependencies
+RUN apt-get update && apt-get install -y \
+    bpftrace \
+    linux-tools-generic \
+    linux-tools-common \
+    kmod \
+    wget \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set the working directory
+WORKDIR /usr/local/app
+
+# Copy the files into the working directory
+COPY . .
+
+# Default command
+CMD ["/bin/bash"]
