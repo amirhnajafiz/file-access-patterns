@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /usr/local/app
 
 # Copy the files into the working directory
-COPY . .
+COPY src/ .
 
 # Set executable permissions for the trace script
 RUN chmod +x /usr/local/app/trace.sh

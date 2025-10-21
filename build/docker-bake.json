@@ -11,8 +11,8 @@
   },
   "target": {
     "flap": {
-      "context": "src",
-      "dockerfile": "../build/Dockerfile",
+      "context": ".",
+      "dockerfile": "build/Dockerfile",
       "tags": ["ghcr.io/amirhnajafiz/flap:${TAG}"],
       "output": ["type=registry"]
     }
