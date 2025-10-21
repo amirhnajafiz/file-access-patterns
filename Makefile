@@ -8,7 +8,7 @@ chmod-tests:
 	@echo "Making test scripts executable..."
 	@chmod +x tests/image-build.sh
 	@chmod +x tests/e2e.sh
-	@chmod +x tests/utils/cleanup.sh
+	@chmod +x tests/cleanup.sh
 	@echo "Done setting permissions."
 	@echo ""
 
@@ -25,7 +25,7 @@ run-tests:
 	@bash tests/e2e.sh
 	@echo ""
 	@echo "=========================================="
-	@echo "Running tests/utils/cleanup.sh"
+	@echo "Running tests/cleanup.sh"
 	@echo "=========================================="
 	@bash tests/utils/cleanup.sh
 	@echo ""

@@ -1,5 +1,8 @@
 version: '3.8'
+
 services:
+  # trace help only builds the image and runs the help command
+  # to ensure the docker pipeline works without any errors.
   trace-help:
     build:
       context: ./src
@@ -8,6 +11,9 @@ services:
     entrypoint: ["/usr/local/app/trace.sh"]
     command: ["-h"]
 
+  # user end-to-end test runs a tracing operation to validate the
+  # program functionality. If it works successfully, you should be able
+  # to see the output in tests/logs directory.
   e2e:
     build:
       context: ./src

@@ -1,4 +1,5 @@
 #!/usr/bin/env sh
+
 # trace - small wrapper to run bpftrace in either command or pid mode
 # Usage: trace -c "command" -o output
 #        trace -p pid -o output
