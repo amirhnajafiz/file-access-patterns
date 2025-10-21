@@ -12,7 +12,7 @@
   "target": {
     "flap": {
       "context": "src",
-      "dockerfile": "build/Dockerfile",
+      "dockerfile": "../build/Dockerfile",
       "tags": ["ghcr.io/amirhnajafiz/flap:${TAG}"],
       "output": ["type=registry"]
     }
