@@ -24,7 +24,6 @@ services:
     volumes:
       - /lib/modules:/lib/modules:ro
       - /sys/kernel/debug:/sys/kernel/debug:rw
-      - /usr/src:/usr/src:ro
       - ./tests/logs:/logs:rw
     entrypoint: ["/usr/local/app/trace.sh"]
     command: ["-c", "ls", "-o", "/logs/trace_ls.txt"]
