@@ -2,8 +2,6 @@ name: Build and push Docker image to a container registry
 
 on:
   push:
-    branches:
-      - master
     tags:
       - 'v*.*.*'
   workflow_dispatch:
