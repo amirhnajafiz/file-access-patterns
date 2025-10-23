@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
     bpftrace \
     linux-tools-generic \
     linux-tools-common \
+    linux-headers-$(uname-r) \
     kmod \
     wget \
     curl \
@@ -22,3 +23,4 @@ RUN chmod +x /usr/local/app/trace.sh
 
 # Default command
 CMD ["/bin/bash"]
+
