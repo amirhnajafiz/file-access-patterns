@@ -20,6 +20,9 @@ RUN apt-get update && apt-get install -y \
     kmod \
     wget \
     curl \
+    xz-utils \
+    procps \
+    strace \
     && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory
