@@ -1,9 +1,9 @@
-name: Build and push Docker image to a container registry
+name: Build and push beta versions Docker images to a container registry
 
 on:
   push:
     branches:
-      - master
+      - dev
     tags:
       - 'v*.*.*'
   workflow_dispatch:
@@ -26,7 +26,7 @@ jobs:
           password: ${{ secrets.RE_GITHUB_TOKEN }}
       - uses: docker/bake-action@v6
         env:
-          TAG: ${{ steps.vars.outputs.tag }}
+          TAG: "${{ steps.vars.outputs.tag }}-dev"
         with:
           push: true
           files: "build/docker-bake.json"
