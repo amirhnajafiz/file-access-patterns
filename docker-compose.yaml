@@ -22,8 +22,8 @@ services:
         soft: -1
         hard: -1
     volumes:
-      - /proc:/proc:ro
-      - /sys:/sys:ro
+      - /proc:/proc:rw
+      - /sys:/sys:rw
       - ./tests/logs:/logs:rw
     entrypoint: ["/usr/local/app/trace.sh"]
     command: ["-c", "ls", "-o", "/logs/trace_ls.txt"]
