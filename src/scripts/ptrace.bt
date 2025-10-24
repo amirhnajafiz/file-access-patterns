@@ -1,3 +1,5 @@
+#!/usr/bin/env bpftrace
+
 /* ptrace.bt
  * About: Traces all file access events of a process and its subprocs and
  * outputs the total bytes read/write and access times.
@@ -10,12 +12,12 @@ BEGIN
 {
   printf("[%s] START tracing file-access events\n", strftime("%Y-%m-%d %H:%M:%S", nsecs));
 
-  @fname[cpid, 0] = "STDIN";
-  @fname[cpid, 1] = "STDOUT";
-  @fname[cpid, 2] = "STDERR";
-  @tracked[cpid] = 1;
+  @fname[$1, 0] = "STDIN";
+  @fname[$1, 1] = "STDOUT";
+  @fname[$1, 2] = "STDERR";
+  @tracked[$1] = 1;
 
-  printf("[%s] Tracking PID %d...\n", strftime("%Y-%m-%d %H:%M:%S", nsecs), cpid);
+  printf("[%s] Tracking PID %d...\n", strftime("%Y-%m-%d %H:%M:%S", nsecs), $1);
 }
 
 /* when we see a fork, if parent is tracked then also track child */

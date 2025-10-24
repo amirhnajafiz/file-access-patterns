@@ -1,3 +1,5 @@
+#!/usr/bin/env bpftrace
+
 /* ctract.bt
  * About: Traces all file access events of a command and its subprocs and
  * outputs the total bytes read/write and access times.

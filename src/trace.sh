@@ -59,11 +59,11 @@ ensure_script() {
 
 # decide what to run
 if [ -n "$cmd" ]; then
-  ensure_script "bpftrace/ctrace.bt"
-  printf "Running: bpftrace -c %s bpftrace/ctrace.bt > %s\n" "'$cmd'" "$out"
+  ensure_script "scripts/ctrace.bt"
+  printf "Running: bpftrace -c %s scripts/ctrace.bt > %s\n" "'$cmd'" "$out"
   # Use exec so the shell is replaced by bpftrace (optional). We capture exit code.
   # Quoting $cmd carefully so it's passed as a single argument to -c.
-  bpftrace -c "$cmd" bpftrace/ctrace.bt > "$out"
+  bpftrace -c "$cmd" scripts/ctrace.bt > "$out"
   rc=$?
   if [ $rc -ne 0 ]; then
     printf "bpftrace exited with code %d\n" "$rc" >&2
@@ -71,14 +71,14 @@ if [ -n "$cmd" ]; then
   exit $rc
 
 elif [ -n "$pid" ]; then
-  ensure_script "bpftrace/ptrace.bt"
+  ensure_script "scripts/ptrace.bt"
   # Validate pid is numeric
   case $pid in
     ''|*[!0-9]*) printf "Error: pid must be a positive integer.\n" >&2; exit 2 ;;
   esac
 
-  printf "Running: bpftrace -p %s bpftrace/ptrace.bt > %s\n" "$pid" "$out"
-  bpftrace bpftrace/ptrace.bt "$pid" > "$out"
+  printf "Running: bpftrace -p %s scripts/ptrace.bt > %s\n" "$pid" "$out"
+  bpftrace scripts/ptrace.bt "$pid" > "$out"
   rc=$?
   if [ $rc -ne 0 ]; then
     printf "bpftrace exited with code %d\n" "$rc" >&2
