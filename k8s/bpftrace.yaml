@@ -6,7 +6,7 @@ spec:
   shareProcessNamespace: true   # allow containers to see each other's processes
   initContainers:
   - name: bpftrace
-    image: ghcr.io/amirhnajafiz/flap:v0.0.0-beta-6
+    image: ghcr.io/amirhnajafiz/flap:v0.0.0-beta-7
     securityContext:
       privileged: true                # or at least add CAP_SYS_PTRACE
       capabilities:

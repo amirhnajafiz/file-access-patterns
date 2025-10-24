@@ -25,5 +25,14 @@ RUN apt-get update && apt-get install -y \
     strace \
     && rm -rf /var/lib/apt/lists/*
 
+# Set the working directory
+WORKDIR /usr/local/app
+
+# Copy the files into the working directory
+COPY src/ .
+
+# Set executable permissions for the trace script
+RUN chmod +x /usr/local/app/trace.sh
+
 # Default command
 CMD ["/bin/sh"]
