@@ -2,18 +2,41 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: bpftrace-test
+  labels: 
+    app: bpftrace
 spec:
   shareProcessNamespace: true   # allow containers to see each other's processes
   initContainers:
-  - name: bpftrace
-    image: ghcr.io/amirhnajafiz/flap:v0.0.0-beta-7
-    securityContext:
-      privileged: true                # or at least add CAP_SYS_PTRACE
-      capabilities:
-        add: ["SYS_PTRACE"]
-    command: ["sleep", "infinity"]
+    - name: bpftrace
+      image: ghcr.io/amirhnajafiz/flap:v0.0.0-beta-7
+      restartPolicy: Always
+      securityContext:
+        privileged: true                # or at least add CAP_SYS_PTRACE
+        capabilities:
+          add: ["SYS_PTRACE"]
+      command: ["sleep", "infinity"]
+      volumeMounts:
+      - name: src
+        mountPath: /usr/src
+        readOnly: true
+      - name: modules
+        mountPath: /lib/modules
+        readOnly: true
+      - name: debug
+        mountPath: /sys/kernel/debug
   containers:
   - name: nginx
     image: nginx:latest
+  volumes:
+    - name: src
+      hostPath: 
+        path: /usr/src
+    - name: modules
+      hostPath:
+        path: /lib/modules
+    - name: debug
+      hostPath:
+        path: /sys/kernel/debug
+
 
 
