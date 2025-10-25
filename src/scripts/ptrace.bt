@@ -5,7 +5,7 @@
  * outputs the total bytes read/write and access times.
  *
  * Usage:
- *   sudo bpftrace -o tracing.out trace_file_access.bt <PID>
+ *   sudo bpftrace -o tracing.out ptrace.bt <PID>
  */
 
 BEGIN

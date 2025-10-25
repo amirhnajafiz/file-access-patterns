@@ -1,24 +1,12 @@
 #!/usr/bin/env bpftrace
 
-/* ctract.bt
- * About: Traces all file access events of a command and its subprocs and
+/* ntrace.bt
+ * About: Traces all file access events of a process and its subprocs and
  * outputs the total bytes read/write and access times.
  *
  * Usage:
- *   sudo bpftrace -c "./myapp arg1 arg2" -o tracing.out ctrace.bt
+ *   sudo bpftrace -o tracing.out ntrace.bt <NAME>
  */
-
-BEGIN
-{
-  printf("[%s] START tracing file-access events\n", strftime("%Y-%m-%d %H:%M:%S", nsecs));
-
-  @fname[cpid, 0] = "STDIN";
-  @fname[cpid, 1] = "STDOUT";
-  @fname[cpid, 2] = "STDERR";
-  @tracked[cpid] = 1;
-
-  printf("[%s] Tracking PID %d...\n", strftime("%Y-%m-%d %H:%M:%S", nsecs), cpid);
-}
 
 /* when we see a fork, if parent is tracked then also track child */
 tracepoint:sched:sched_process_fork
@@ -37,7 +25,7 @@ tracepoint:sched:sched_process_fork
 
 /* when exec happens, if old_pid tracked ensure that the new pid is also tracked */
 tracepoint:sched:sched_process_exec
-/ @tracked[args->old_pid] /
+/ comm == str($1) || @tracked[args->old_pid] /
 {
   printf("[%s] %d %s EXEC %d %s\n", strftime("%Y-%m-%d %H:%M:%S", nsecs),
          args->old_pid, comm, args->pid, str(args->filename));

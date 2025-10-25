@@ -3,6 +3,7 @@
 # trace - small wrapper to run bpftrace in either command or pid mode
 # Usage: trace -c "command" -o output
 #        trace -p pid -o output
+#        trace -n name -o output
 
 set -eu
 
@@ -11,9 +12,10 @@ print_usage() {
 Usage:
   $0 -c "command" -o output     # run bpftrace with -c (bpftrace/ctrace.bt)
   $0 -p pid -o output           # attach bpftrace to pid (bpftrace/ptrace.bt)
+  $0 -n name -o output          # attach bpftrace by name (bpftrace/ntrace.bt)
 Notes:
-  - If both -c and -p are provided, -c takes priority.
-  - Requires bpftrace and the scripts bpftrace/ctrace.bt / bpftrace/ptrace.bt to exist in
+  - Precedence order is command, pid then name.
+  - Requires bpftrace and the scripts ctrace.bt, ptrace.bt and ntrace.bt to exist in
     the current working directory (or edit paths in the script).
 EOF
 }
@@ -21,13 +23,15 @@ EOF
 # defaults
 cmd=""
 pid=""
+name=""
 out=""
 
 # parse options
-while getopts ":c:p:o:h" opt; do
+while getopts ":c:p:n:o:h" opt; do
   case "$opt" in
     c) cmd="$OPTARG" ;;
     p) pid="$OPTARG" ;;
+    n) name="$OPTARG" ;;
     o) out="$OPTARG" ;;
     h) print_usage; exit 0 ;;
     \?) printf "Invalid option: -%s\n\n" "$OPTARG" >&2; print_usage; exit 2 ;;
@@ -85,8 +89,20 @@ elif [ -n "$pid" ]; then
   fi
   exit $rc
 
+elif [ -n "$name" ]; then
+  ensure_script "scripts/ntrace.bt"
+  printf "Running: bpftrace scripts/ntrace.bt %s > %s\n" "'$name'" "$out"
+  # Use exec so the shell is replaced by bpftrace (optional). We capture exit code.
+  # Quoting $cmd carefully so it's passed as a single argument to -c.
+  bpftrace scripts/ntrace.bt "$name" > "$out"
+  rc=$?
+  if [ $rc -ne 0 ]; then
+    printf "bpftrace exited with code %d\n" "$rc" >&2
+  fi
+  exit $rc 
+
 else
-  printf "Error: either -c <command> or -p <pid> must be provided.\n\n" >&2
+  printf "Error: either -c <command>, -p <pid> or -n <name> must be provided.\n\n" >&2
   print_usage
   exit 2
 fi

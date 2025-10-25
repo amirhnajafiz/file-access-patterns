@@ -4,7 +4,7 @@ services:
   # trace help only builds the image and runs the help command
   # to ensure the docker pipeline works without any errors.
   trace-help:
-    image: ghcr.io/amirhnajafiz/flap:v0.0.0-beta-7
+    image: ghcr.io/amirhnajafiz/flap:v0.0.0-beta-8
     entrypoint: ["/usr/local/app/trace.sh"]
     command: ["-h"]
 
@@ -12,7 +12,7 @@ services:
   # program functionality. If it works successfully, you should be able
   # to see the output in tests/logs directory.
   e2e:
-    image: ghcr.io/amirhnajafiz/flap:v0.0.0-beta-7
+    image: ghcr.io/amirhnajafiz/flap:v0.0.0-beta-8
     privileged: true
     network_mode: host
     pid: host
