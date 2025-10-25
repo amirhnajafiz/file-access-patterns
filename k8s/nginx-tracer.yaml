@@ -4,7 +4,7 @@ metadata:
   name: nginx-service
 spec:
   selector:
-    app: bpftrace
+    app: nginx-tracer
   ports:
     - name: http-web-svc
       port: 80
@@ -14,14 +14,15 @@ spec:
 apiVersion: v1
 kind: Pod
 metadata:
-  name: bpftrace-test
+  name: nginx-tracer
   labels: 
-    app: bpftrace
+    app: nginx-tracer
 spec:
-  shareProcessNamespace: true   # allow containers to see each other's processes
+  hostPID: true
   initContainers:
     - name: bpftrace
-      image: ghcr.io/amirhnajafiz/flap:v0.0.0-beta-8
+      image: ghcr.io/amirhnajafiz/flap:v0.0.0-beta-9
+      imagePullPolicy: Never
       restartPolicy: Always
       securityContext:
         privileged: true                # or at least add CAP_SYS_PTRACE

@@ -8,6 +8,11 @@
  *   sudo bpftrace -o tracing.out ntrace.bt <NAME>
  */
 
+BEGIN
+{
+  printf("[%s] START tracing file-access events for %s\n", strftime("%Y-%m-%d %H:%M:%S", nsecs), str($1));
+}
+
 /* when we see a fork, if parent is tracked then also track child */
 tracepoint:sched:sched_process_fork
 / @tracked[args->parent_pid] /
