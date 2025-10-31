@@ -18,7 +18,6 @@ metadata:
   labels: 
     app: nginx-tracer
 spec:
-  hostPID: true
   initContainers:
     - name: bpftrace
       image: ghcr.io/amirhnajafiz/flap:v0.0.0-beta-9
@@ -28,6 +27,8 @@ spec:
         capabilities:
           add: ["SYS_PTRACE"]
       volumeMounts:
+      - name: proc
+        mountPath: /proc
       - name: debug
         mountPath: /sys/kernel/debug
       - name: output
@@ -45,9 +46,12 @@ spec:
       - name: http-web-svc
         containerPort: 80
   volumes:
-    - name: debug
-      hostPath:
-        path: /sys/kernel/debug
-    - name: output
-      hostPath:
-        path: /var/log/bpftrace
+  - name: proc
+    hostPath:
+      path: /proc
+  - name: debug
+    hostPath:
+      path: /sys/kernel/debug
+  - name: output
+    hostPath:
+      path: /var/log/bpftrace
