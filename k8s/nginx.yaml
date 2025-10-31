@@ -4,7 +4,7 @@ metadata:
   name: nginx-service
 spec:
   selector:
-    app: nginx-tracer
+    app: nginx
   ports:
     - name: http-web-svc
       port: 80
@@ -14,9 +14,9 @@ spec:
 apiVersion: v1
 kind: Pod
 metadata:
-  name: nginx-tracer
+  name: nginx
   labels: 
-    app: nginx-tracer
+    app: nginx
 spec:
   initContainers:
     - name: bpftrace
