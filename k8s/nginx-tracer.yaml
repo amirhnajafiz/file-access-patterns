@@ -22,7 +22,6 @@ spec:
   initContainers:
     - name: bpftrace
       image: ghcr.io/amirhnajafiz/flap:v0.0.0-beta-9
-      imagePullPolicy: Never
       restartPolicy: Always
       securityContext:
         privileged: true                # or at least add CAP_SYS_PTRACE
