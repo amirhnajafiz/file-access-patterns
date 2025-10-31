@@ -16,10 +16,10 @@ spec:
         nvidia-nsight-profile: disabled # needed for nvidia nsight
     spec:
       tolerations: # must have this to schedule on GPU nodes
-      - key: “level”
-        operator: “Equal”
-        value: “important”
-        effect: “NoSchedule”
+      - key: "level"
+        operator: "Equal"
+        value: "important"
+        effect: "NoSchedule"
       nodeSelector:
         kubernetes.io/hostname: sunyibm1.fsl.cs.sunysb.edu
       restartPolicy: Never
@@ -30,7 +30,7 @@ spec:
       - name: shm
         emptyDir:
           medium: Memory
-          sizeLimit: “1G”
+          sizeLimit: "1G"
       - name: proc
         hostPath:
           path: /proc
@@ -77,7 +77,7 @@ spec:
             --max-model-len 40k
         env:
         - name: VLLM_LOGGING_LEVEL
-          value: “DEBUG”
+          value: "DEBUG"
         - name: HUGGING_FACE_HUB_TOKEN
           valueFrom:
             secretKeyRef:
@@ -87,13 +87,13 @@ spec:
         - containerPort: 8000
         resources:
           limits:
-            cpu: “10”
+            cpu: "10"
             memory: 25G
-            nvidia.com/gpu: “1"
+            nvidia.com/gpu: "1"
           requests:
-            cpu: “5”
+            cpu: "5"
             memory: 12G
-            nvidia.com/gpu: “1"
+            nvidia.com/gpu: "1"
         volumeMounts:
         - mountPath: /root/.cache/huggingface
           name: cache-volume

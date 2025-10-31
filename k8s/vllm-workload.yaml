@@ -15,9 +15,9 @@ spec:
       containers:
       - name: python-runner
         image: python:3.9-slim
-        command: [“/bin/bash”]
+        command: ["/bin/bash"]
         args:
-          - “-c”
+          - "-c"
           - |
             cd /workspace
             pip install requests
@@ -26,7 +26,7 @@ spec:
             python3 promptload.py --parallels 1 --prompts_per_worker 1 --min_tokens 3000 --max_tokens 3000 --sleep_ms 50 --duration 1 --log debug --prompt_files prompts.txt
         env:
         - name: MODEL
-          value: “meta-llama/Llama-3.1-8B”
+          value: "meta-llama/Llama-3.1-8B"
         volumeMounts:
         - name: python-code
           mountPath: /app
@@ -36,11 +36,11 @@ spec:
           mountPath: /workspace
         resources:
           requests:
-            cpu: “100m”
-            memory: “256Mi”
+            cpu: "100m"
+            memory: "256Mi"
           limits:
-            cpu: “500m”
-            memory: “512Mi”
+            cpu: "500m"
+            memory: "512Mi"
       volumes:
       - name: python-code
         configMap:
