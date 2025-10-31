@@ -60,7 +60,7 @@ spec:
           - |
             ts=$(date +"%Y-%m-%d_%H-%M-%S");
             outfile="/var/log/bpftrace/${ts}.out";
-            ./trace.sh -n "nginx" -o "$outfile"
+            ./trace.sh -n "vllm" -o "$outfile"
       containers:
       - name: vllm-container
         image: vllm/vllm-openai:latest
