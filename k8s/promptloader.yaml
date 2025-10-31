@@ -15,7 +15,7 @@ spec:
       containers:
       - name: python-runner
         image: python:3.9-slim
-        command: ["/bin/bash"]
+        command: ["/bin/sh"]
         args:
           - "-c"
           - |

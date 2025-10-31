@@ -64,7 +64,7 @@ spec:
       containers:
       - name: vllm-container
         image: vllm/vllm-openai:latest
-        command: [“/bin/sh”, “-c”]
+        command: ["/bin/sh", "-c"]
         args:
           - >
             vllm serve meta-llama/Llama-3.1-8B
