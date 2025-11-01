@@ -15,7 +15,7 @@ BEGIN
 
 /* when we see a fork, if parent is tracked then also track child */
 tracepoint:sched:sched_process_fork
-/ @tracked[args->parent_pid] /
+/ comm == str($1) || @tracked[args->parent_pid] /
 {
   printf("[%s] %d %s FORK -> %d %s\n", strftime("%Y-%m-%d %H:%M:%S", nsecs),
          args->parent_pid, args->parent_comm, args->child_pid, args->child_comm);
