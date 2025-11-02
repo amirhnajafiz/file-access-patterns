@@ -1,0 +1,113 @@
+# deploying a vLLM job on SUNY-iBM1
+# using local PVC
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: vllm
+  namespace: llm-servings
+  labels:
+    app: vllm
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app: vllm
+        nvidia-nsight-profile: disabled # needed for nvidia nsight
+    spec:
+      hostPID: true
+      tolerations: # must have this to schedule on GPU nodes
+      - key: "level"
+        operator: "Equal"
+        value: "important"
+        effect: "NoSchedule"
+      nodeSelector:
+        kubernetes.io/hostname: sunyibm1.fsl.cs.sunysb.edu
+      restartPolicy: Never
+      volumes:
+      - name: cache-volume
+        persistentVolumeClaim:
+          claimName: vllm-local-pvc # previous claim: vllm-pvc
+      - name: shm
+        emptyDir:
+          medium: Memory
+          sizeLimit: "1G"
+      - name: proc
+        hostPath:
+          path: /proc
+      - name: debug
+        hostPath:
+          path: /sys/kernel/debug
+      - name: output
+        hostPath:
+          path: /var/log/bpftrace
+      initContainers:
+      - name: bpftrace
+        image: ghcr.io/amirhnajafiz/flap:v0.0.0-beta-10
+        restartPolicy: Always
+        securityContext:
+          privileged: true                # or at least add CAP_SYS_PTRACE
+          capabilities:
+            add: ["SYS_PTRACE"]
+        volumeMounts:
+        - name: proc
+          mountPath: /proc
+        - name: debug
+          mountPath: /sys/kernel/debug
+        - name: output
+          mountPath: /var/log/bpftrace
+        command: ["sh", "-c"]
+        args:
+          - |
+            ts=$(date +"%Y-%m-%d_%H-%M-%S");
+            outfile="/var/log/bpftrace/${ts}.out";
+            ./trace.sh -n "vllm" -o "$outfile"
+      containers:
+      - name: vllm-container
+        image: vllm/vllm-openai:latest
+        command: ["vllm", "serve"]
+        args:
+          - "meta-llama/Llama-3.1-8B"
+          - "--host=0.0.0.0"
+          - "--port=8000"
+          - "--tensor-parallel-size=1"
+          - "--no-enable-prefix-caching"
+          - "--trust-remote-code"
+          - "--seed=42"
+          - "--max-model-len=40k"
+        env:
+        - name: VLLM_LOGGING_LEVEL
+          value: "DEBUG"
+        - name: HUGGING_FACE_HUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: hf-token-secret
+              key: token
+        ports:
+        - containerPort: 8000
+        resources:
+          limits:
+            cpu: "10"
+            memory: 25G
+            nvidia.com/gpu: "1"
+          requests:
+            cpu: "5"
+            memory: 12G
+            nvidia.com/gpu: "1"
+        volumeMounts:
+        - mountPath: /root/.cache/huggingface
+          name: cache-volume
+        - name: shm
+          mountPath: /dev/shm
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 300
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 300

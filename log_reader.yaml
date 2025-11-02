@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Pod
+metadata: 
+  name: log-reader 
+  labels:
+    app: log-reader
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: "sunyibm1.fsl.cs.sunysb.edu"
+  tolerations: # must have this to schedule on GPU nodes
+  - key: "level"
+    operator: "Equal"
+    value: "important"
+    effect: "NoSchedule"
+  volumes:
+  - name: output
+    hostPath:
+      path: /var/log/bpftrace
+  containers:
+  - name: log-reader  
+    image: busybox
+    volumeMounts:
+    - name: output
+      mountPath: /var/log/bpftrace
+    command: ["sleep", "infinity"]
+
+
+    
