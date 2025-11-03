@@ -1,9 +1,11 @@
 #!/usr/bin/env sh
+# file: trace.sh
 
-# trace - small wrapper to run bpftrace in either command or pid mode
-# Usage: trace -c "command" -o output
-#        trace -p pid -o output
-#        trace -n name -o output
+# Traces all file access events of a command and its subprocs and outputs the total bytes read/write and access times.
+# Usage: 
+#   trace -c "command" -o output
+#   trace -p pid -o output
+#   trace -n name -o output
 
 set -eu
 
@@ -65,8 +67,8 @@ ensure_script() {
 if [ -n "$cmd" ]; then
   ensure_script "scripts/ctrace.bt"
   printf "Running: bpftrace -c %s scripts/ctrace.bt > %s\n" "'$cmd'" "$out"
-  # Use exec so the shell is replaced by bpftrace (optional). We capture exit code.
-  # Quoting $cmd carefully so it's passed as a single argument to -c.
+  # use exec so the shell is replaced by bpftrace (optional). We capture exit code.
+  # quoting $cmd carefully so it's passed as a single argument to -c.
   bpftrace -c "$cmd" scripts/ctrace.bt > "$out"
   rc=$?
   if [ $rc -ne 0 ]; then
@@ -76,7 +78,7 @@ if [ -n "$cmd" ]; then
 
 elif [ -n "$pid" ]; then
   ensure_script "scripts/ptrace.bt"
-  # Validate pid is numeric
+  # validate pid is numeric
   case $pid in
     ''|*[!0-9]*) printf "Error: pid must be a positive integer.\n" >&2; exit 2 ;;
   esac
@@ -92,8 +94,8 @@ elif [ -n "$pid" ]; then
 elif [ -n "$name" ]; then
   ensure_script "scripts/ntrace.bt"
   printf "Running: bpftrace scripts/ntrace.bt %s > %s\n" "'$name'" "$out"
-  # Use exec so the shell is replaced by bpftrace (optional). We capture exit code.
-  # Quoting $cmd carefully so it's passed as a single argument to -c.
+  # use exec so the shell is replaced by bpftrace (optional). We capture exit code.
+  # quoting $cmd carefully so it's passed as a single argument to -c.
   bpftrace scripts/ntrace.bt "$name" > "$out"
   rc=$?
   if [ $rc -ne 0 ]; then

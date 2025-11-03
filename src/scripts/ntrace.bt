@@ -1,12 +1,6 @@
 #!/usr/bin/env bpftrace
-
-/* ntrace.bt
- * About: Traces all file access events of a process and its subprocs and
- * outputs the total bytes read/write and access times.
- *
- * Usage:
- *   sudo bpftrace -o tracing.out ntrace.bt <NAME>
- */
+// file: ntrace.bt
+// sudo bpftrace -o tracing.out ntrace.bt <NAME>
 
 BEGIN
 {
@@ -56,8 +50,10 @@ tracepoint:syscalls:sys_exit_openat
 / @tracked[pid] /
 {
   $fname = str(@open_fname[tid]);
+
   printf("[%s] %d %s EXIT openat fname=%s ret=%d\n", strftime("%Y-%m-%d %H:%M:%S", nsecs),
          pid, comm, $fname, args->ret);
+
   if(args->ret >= 0){
     @fname[pid, args->ret] = $fname;
     @read_bytes[$fname] = sum(0);
@@ -65,6 +61,7 @@ tracepoint:syscalls:sys_exit_openat
     @read_time[$fname] = sum(0);
     @write_time[$fname] = sum(0);
   }
+
   delete(@open_fname[tid]);
 }
 
@@ -83,11 +80,14 @@ tracepoint:syscalls:sys_exit_dup
 {
   $fd = @dup_fd[tid];
   $fname = @fname[pid, $fd];
+
   printf("[%s] %d %s EXIT dup fd=%d fname=%s ret=%d\n", strftime("%Y-%m-%d %H:%M:%S", nsecs),
          pid, comm, $fd, $fname, args->ret);
+
   if(args->ret != -1){
     @fname[pid, args->ret] = $fname;
   }
+
   delete(@fname[pid, $fd]);
   delete(@dup_fd[tid]);
 }
@@ -107,11 +107,14 @@ tracepoint:syscalls:sys_exit_dup2
 {
   $fd = @dup_fd[tid];
   $fname = @fname[pid, $fd];
+
   printf("[%s] %d %s EXIT dup2 fd=%d fname=%s ret=%d\n", strftime("%Y-%m-%d %H:%M:%S", nsecs),
          pid, comm, $fd, $fname, args->ret);
+  
   if(args->ret != -1){
     @fname[pid, args->ret] = $fname;
   }
+
   delete(@fname[pid, $fd]);
   delete(@dup_fd[tid]);
 }
@@ -131,11 +134,14 @@ tracepoint:syscalls:sys_exit_newfstat
 {
   $fd = @fstat_fd[tid];
   $fname = @fname[pid, $fd];
+
   printf("[%s] %d %s EXIT newfstat fd=%d fname=%s ret=%d\n", strftime("%Y-%m-%d %H:%M:%S", nsecs),
          pid, comm, $fd, $fname, args->ret);
+
   if(args->ret != -1){
     @num_fstat[$fname] = count();
   }
+
   delete(@fstat_fd[tid]);
 }
 
@@ -144,8 +150,10 @@ tracepoint:syscalls:sys_enter_read
 / @tracked[pid] /
 {
   $fname = @fname[pid, args->fd];
+
   printf("[%s] %d %s ENTER read fd=%d fname=%s count=%d\n", strftime("%Y-%m-%d %H:%M:%S", nsecs),
          pid, comm, args->fd, $fname, args->count);
+
   @read_fd[tid] = args->fd;
   @read_count[tid] = args->count;
   @read_start_time[tid] = elapsed;
@@ -156,12 +164,15 @@ tracepoint:syscalls:sys_exit_read
 {
   $fd = @read_fd[tid];
   $fname = @fname[pid, $fd];
+
   printf("[%s] %d %s EXIT read fd=%d fname=%s ret=%d req=%d\n", strftime("%Y-%m-%d %H:%M:%S", nsecs),
          pid, comm, $fd, $fname, args->ret, @read_count[tid]);
+  
   if(args->ret != -1){
     @read_bytes[$fname] = sum(args->ret);
     @read_time[$fname] = sum(elapsed - @read_start_time[tid]);
   }
+
   delete(@read_fd[tid]);
   delete(@read_count[tid]);
   delete(@read_start_time[tid]);
@@ -172,8 +183,10 @@ tracepoint:syscalls:sys_enter_write
 / @tracked[pid] /
 {
   $fname = @fname[pid, args->fd];
+
   printf("[%s] %d %s ENTER write fd=%d fname=%s count=%d\n", strftime("%Y-%m-%d %H:%M:%S", nsecs),
          pid, comm, args->fd, $fname, args->count);
+
   @write_fd[tid] = args->fd;
   @write_count[tid] = args->count;
   @write_start_time[tid] = elapsed;
@@ -184,13 +197,16 @@ tracepoint:syscalls:sys_exit_write
 {
   $fd = @write_fd[tid];
   $fname = @fname[pid, $fd];
+
   printf("[%s] %d %s EXIT write fd=%d fname=%s ret=%d req=%d\n", strftime("%Y-%m-%d %H:%M:%S", nsecs),
          pid, comm, $fd, $fname, args->ret, @write_count[tid]);
+
   if(args->ret != -1){
     @write_bytes[$fname] = sum(args->ret);
     @write_time[$fname] = sum(elapsed - @write_start_time[tid]);
     delete(@write_start_time[tid]);
   }
+
   delete(@write_fd[tid]);
   delete(@write_count[tid]);
 }
@@ -210,8 +226,10 @@ tracepoint:syscalls:sys_exit_close
 {
   $fd = @close_fd[tid];
   $fname = @fname[pid, $fd];
+
   printf("[%s] %d %s EXIT close fd=%d fname=%s ret=%d\n", strftime("%Y-%m-%d %H:%M:%S", nsecs),
          pid, comm, $fd, $fname, args->ret);
+
   delete(@close_fd[tid]);
   delete(@fname[pid, $fd]);
 }
@@ -227,4 +245,3 @@ tracepoint:sched:sched_process_exit
   delete(@fname[pid, 2]);
   delete(@tracked[pid]);
 }
-
