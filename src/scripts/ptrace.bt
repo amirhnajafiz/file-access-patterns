@@ -1,6 +1,6 @@
 #!/usr/bin/env bpftrace
 // file: ptrace.bt
-// sudo bpftrace -o tracing.out ptrace.bt <PID>
+// sudo bpftrace -o /tmp/tracing.out ptrace.bt <PID>
 
 BEGIN
 {

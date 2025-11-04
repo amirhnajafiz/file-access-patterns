@@ -1,6 +1,6 @@
 #!/usr/bin/env bpftrace
 // file: ctrace.bt
-// sudo bpftrace -c "./myapp arg1 arg2" -o tracing.out ctrace.bt
+// sudo bpftrace -c "./myapp arg1 arg2" -o /tmp/tracing.out ctrace.bt
 
 BEGIN
 {

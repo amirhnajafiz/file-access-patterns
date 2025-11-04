@@ -1,26 +1,30 @@
 #!/usr/bin/env sh
 # file: trace.sh
 
-# Traces all file access events of a command and its subprocs and outputs the total bytes read/write and access times.
-# Usage: 
-#   trace -c "command" -o output
-#   trace -p pid -o output
-#   trace -n name -o output
-#   trace -cg cgroupid -o output
+# Traces all file access events of a command and its sub-processes,
+# and outputs the total bytes read/written and access times.
+# 
+# Usage examples:
+#   trace -c "command"   -o output
+#   trace -p pid         -o output
+#   trace -n name        -o output
+#   trace -cg cgroupid   -o output
 
 set -eu
 
 print_usage() {
   cat <<EOF
 Usage:
-  $0 -c "command" -o output     # run bpftrace with -c (bpftrace/ctrace.bt)
-  $0 -p pid -o output           # attach bpftrace to pid (bpftrace/ptrace.bt)
-  $0 -n name -o output          # attach bpftrace by name (bpftrace/ntrace.bt)
-  $0 -cg cgroupid -o output # attach bpftrace by name (bpftrace/ctrace_cgid.bt)
+  $0 -c/--cmd   "command"   -o output     # trace a command and its subprocesses (bpftrace/ctrace.bt)
+  $0 -p/--pid   pid         -o output     # trace an existing process by PID (bpftrace/ptrace.bt)
+  $0 -n/--name  name        -o output     # trace all processes by name (bpftrace/ntrace.bt)
+  $0 -cg/--cgid cgroupid    -o output     # trace processes by cgroup ID (bpftrace/ctrace_cgid.bt)
+
 Notes:
-  - Precedence order is command, pid then name.
-  - Requires bpftrace and the scripts ctrace.bt, ptrace.bt and ntrace.bt to exist in
-    the current working directory (or edit paths in the script).
+  - Precedence order: command > pid > name > cgroupid
+  - Requires bpftrace and the scripts ctrace.bt, ptrace.bt, ntrace.bt,
+    and ctrace_cgid.bt to exist in the current working directory.
+    (You can edit the paths inside this script if needed.)
 EOF
 }
 
@@ -32,16 +36,15 @@ cgid=""
 out=""
 
 # parse options
-while getopts ":c:p:n:o:h" opt; do
-  case "$opt" in
-    c) cmd="$OPTARG" ;;
-    p) pid="$OPTARG" ;;
-    n) name="$OPTARG" ;;
-    cg) cgid="$OPTARG" ;;
-    o) out="$OPTARG" ;;
-    h) print_usage; exit 0 ;;
-    \?) printf "Invalid option: -%s\n\n" "$OPTARG" >&2; print_usage; exit 2 ;;
-    :) printf "Option -%s requires an argument.\n\n" "$OPTARG" >&2; print_usage; exit 2 ;;
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -c|--cmd)   cmd="$2"; shift 2 ;;
+    -p|--pid)   pid="$2"; shift 2 ;;
+    -n|--name)  name="$2"; shift 2 ;;
+    -cg|--cgid) cgid="$2"; shift 2 ;;
+    -o|--out)   out="$2"; shift 2 ;;
+    -h|--help)  print_usage; exit 0 ;;
+    *) echo "Unknown option: $1"; print_usage; exit 2 ;;
   esac
 done
 

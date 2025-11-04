@@ -1,6 +1,6 @@
 #!/usr/bin/env bpftrace
 // file: ntrace.bt
-// sudo bpftrace -o tracing.out ntrace.bt <NAME>
+// sudo bpftrace -o /tmp/tracing.out ntrace.bt <NAME>
 
 BEGIN
 {
