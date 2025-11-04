@@ -5,26 +5,47 @@
 BEGIN
 {
   @tracked_cgid = (uint64)$1;
+
   printf("[%s] START tracing file-access events for CGROUP ID %llu\n",
-         strftime("%Y-%m-%d %H:%M:%S", nsecs), $1);
+    strftime("%Y-%m-%d %H:%M:%S", nsecs), $1);
 }
 
-/* fork: child inherits tracking if parent is in target cgroup */
-tracepoint:sched:sched_process_fork
+/* open enter + exit */
+tracepoint:syscalls:sys_enter_open
 / cgroup == @tracked_cgid /
 {
-  printf("[%s] %d %s FORK -> %d %s [CGID %llu]\n",
-         strftime("%Y-%m-%d %H:%M:%S", nsecs),
-         args->parent_pid, args->parent_comm, args->child_pid, args->child_comm, cgroup);
+  printf("[%s] %d %s ENTER open fname=%s flags=0x%x mode=0%o [CGID %llu]\n",
+    strftime("%Y-%m-%d %H:%M:%S", nsecs),
+    pid, comm, str(args->filename), args->flags, args->mode, cgroup);
+
+  @open_fname[tid] = args->filename;
 }
 
-/* exec: just log exec events from tracked cgroup */
-tracepoint:sched:sched_process_exec
+tracepoint:syscalls:sys_exit_open
 / cgroup == @tracked_cgid /
 {
-  printf("[%s] %d %s EXEC %d %s [CGID %llu]\n",
-         strftime("%Y-%m-%d %H:%M:%S", nsecs),
-         args->old_pid, comm, args->pid, str(args->filename), cgroup);
+  $fname = str(@open_fname[tid]);
+
+  printf("[%s] %d %s EXIT open fname=%s ret=%d [CGID %llu]\n",
+    strftime("%Y-%m-%d %H:%M:%S", nsecs),
+    pid, comm, $fname, args->ret, cgroup);
+
+  if (args->ret >= 0) {
+    @fname[pid, args->ret] = $fname;
+    // counting the overall bytes used in this file
+    @read_bytes[$fname] = sum(0);
+    @write_bytes[$fname] = sum(0);
+
+    // counting the overall time this file was open
+    @read_time[$fname] = sum(0);
+    @write_time[$fname] = sum(0);
+
+    // counting the number of times a file is accesses
+    @read_count[$fname] = count();
+    @write_count[$fname] = count();
+  }
+
+  delete(@open_fname[tid]);
 }
 
 /* openat enter + exit */
@@ -32,8 +53,8 @@ tracepoint:syscalls:sys_enter_openat
 / cgroup == @tracked_cgid /
 {
   printf("[%s] %d %s ENTER openat dfd=%d fname=%s flags=0x%x mode=0%o [CGID %llu]\n",
-         strftime("%Y-%m-%d %H:%M:%S", nsecs),
-         pid, comm, args->dfd, str(args->filename), args->flags, args->mode, cgroup);
+    strftime("%Y-%m-%d %H:%M:%S", nsecs),
+    pid, comm, args->dfd, str(args->filename), args->flags, args->mode, cgroup);
 
   @open_fname[tid] = args->filename;
 }
@@ -44,27 +65,36 @@ tracepoint:syscalls:sys_exit_openat
   $fname = str(@open_fname[tid]);
 
   printf("[%s] %d %s EXIT openat fname=%s ret=%d [CGID %llu]\n",
-         strftime("%Y-%m-%d %H:%M:%S", nsecs),
-         pid, comm, $fname, args->ret, cgroup);
+    strftime("%Y-%m-%d %H:%M:%S", nsecs),
+    pid, comm, $fname, args->ret, cgroup);
 
   if (args->ret >= 0) {
     @fname[pid, args->ret] = $fname;
+    // counting the overall bytes used in this file
     @read_bytes[$fname] = sum(0);
     @write_bytes[$fname] = sum(0);
+
+    // counting the overall time this file was open
     @read_time[$fname] = sum(0);
     @write_time[$fname] = sum(0);
+
+    // counting the number of times a file is accesses
+    @read_count[$fname] = count();
+    @write_count[$fname] = count();
   }
 
   delete(@open_fname[tid]);
 }
 
-/* dup enter + exit, update fname map in case of dup (cgroup-filtered) */
+/* dup enter + exit */
 tracepoint:syscalls:sys_enter_dup
 / cgroup == @tracked_cgid /
 {
   $fname = @fname[pid, args->fildes];
+
   printf("[%s] %d %s ENTER dup fildes=%d fname=%s\n",
-         strftime("%Y-%m-%d %H:%M:%S", nsecs), pid, comm, args->fildes, $fname);
+    strftime("%Y-%m-%d %H:%M:%S", nsecs), pid, comm, args->fildes, $fname);
+  
   @dup_fd[tid] = args->fildes;
 }
 
@@ -75,7 +105,7 @@ tracepoint:syscalls:sys_exit_dup
   $fname = @fname[pid, $fd];
 
   printf("[%s] %d %s EXIT dup fd=%d fname=%s ret=%d\n",
-         strftime("%Y-%m-%d %H:%M:%S", nsecs), pid, comm, $fd, $fname, args->ret);
+    strftime("%Y-%m-%d %H:%M:%S", nsecs), pid, comm, $fd, $fname, args->ret);
 
   if (args->ret != -1) {
     @fname[pid, args->ret] = $fname;
@@ -85,14 +115,16 @@ tracepoint:syscalls:sys_exit_dup
   delete(@dup_fd[tid]);
 }
 
-/* dup2 enter + exit, update fname map in case of dup2 (cgroup-filtered) */
+/* dup2 enter + exit */
 tracepoint:syscalls:sys_enter_dup2
 / cgroup == @tracked_cgid /
 {
   $fname = @fname[pid, args->oldfd];
+
   printf("[%s] %d %s ENTER dup2 oldfd=%d newfd=%d fname=%s\n",
-         strftime("%Y-%m-%d %H:%M:%S", nsecs), pid, comm,
-         args->oldfd, args->newfd, $fname);
+    strftime("%Y-%m-%d %H:%M:%S", nsecs), pid, comm,
+    args->oldfd, args->newfd, $fname);
+  
   @dup_fd[tid] = args->oldfd;
 }
 
@@ -103,7 +135,7 @@ tracepoint:syscalls:sys_exit_dup2
   $fname = @fname[pid, $fd];
 
   printf("[%s] %d %s EXIT dup2 fd=%d fname=%s ret=%d\n",
-         strftime("%Y-%m-%d %H:%M:%S", nsecs), pid, comm, $fd, $fname, args->ret);
+    strftime("%Y-%m-%d %H:%M:%S", nsecs), pid, comm, $fd, $fname, args->ret);
   
   if (args->ret != -1) {
     @fname[pid, args->ret] = $fname;
@@ -113,43 +145,18 @@ tracepoint:syscalls:sys_exit_dup2
   delete(@dup_fd[tid]);
 }
 
-/* newfstat enter + exit, count total number of fstats (cgroup-filtered) */
-tracepoint:syscalls:sys_enter_newfstat
-/ cgroup == @tracked_cgid /
-{
-  $fname = @fname[pid, args->fd];
-  printf("[%s] %d %s ENTER newfstat fd=%d fname=%s\n",
-         strftime("%Y-%m-%d %H:%M:%S", nsecs), pid, comm, args->fd, $fname);
-  @fstat_fd[tid] = args->fd;
-}
-
-tracepoint:syscalls:sys_exit_newfstat
-/ cgroup == @tracked_cgid /
-{
-  $fd = @fstat_fd[tid];
-  $fname = @fname[pid, $fd];
-
-  printf("[%s] %d %s EXIT newfstat fd=%d fname=%s ret=%d\n",
-         strftime("%Y-%m-%d %H:%M:%S", nsecs), pid, comm, $fd, $fname, args->ret);
-  
-  if (args->ret != -1) {
-    @num_fstat[$fname] = count();
-  }
-
-  delete(@fstat_fd[tid]);
-}
-
 /* read enter + exit */
 tracepoint:syscalls:sys_enter_read
 / cgroup == @tracked_cgid /
 {
   $fname = @fname[pid, args->fd];
+
   printf("[%s] %d %s ENTER read fd=%d fname=%s count=%d [CGID %llu]\n",
-         strftime("%Y-%m-%d %H:%M:%S", nsecs),
-         pid, comm, args->fd, $fname, args->count, cgroup);
+    strftime("%Y-%m-%d %H:%M:%S", nsecs),
+    pid, comm, args->fd, $fname, args->count, cgroup);
 
   @read_fd[tid] = args->fd;
-  @read_count[tid] = args->count;
+  @read_req_count[tid] = args->count;
   @read_start_time[tid] = elapsed;
 }
 
@@ -160,16 +167,17 @@ tracepoint:syscalls:sys_exit_read
   $fname = @fname[pid, $fd];
 
   printf("[%s] %d %s EXIT read fd=%d fname=%s ret=%d req=%d [CGID %llu]\n",
-         strftime("%Y-%m-%d %H:%M:%S", nsecs),
-         pid, comm, $fd, $fname, args->ret, @read_count[tid], cgroup);
+    strftime("%Y-%m-%d %H:%M:%S", nsecs),
+    pid, comm, $fd, $fname, args->ret, @read_req_count[tid], cgroup);
 
   if (args->ret > 0) {
     @read_bytes[$fname] = sum(args->ret);
     @read_time[$fname] = sum(elapsed - @read_start_time[tid]);
+    @read_count[$fname] = count();
   }
 
   delete(@read_fd[tid]);
-  delete(@read_count[tid]);
+  delete(@read_req_count[tid]);
   delete(@read_start_time[tid]);
 }
 
@@ -178,12 +186,13 @@ tracepoint:syscalls:sys_enter_write
 / cgroup == @tracked_cgid /
 {
   $fname = @fname[pid, args->fd];
+
   printf("[%s] %d %s ENTER write fd=%d fname=%s count=%d [CGID %llu]\n",
-         strftime("%Y-%m-%d %H:%M:%S", nsecs),
-         pid, comm, args->fd, $fname, args->count, cgroup);
+    strftime("%Y-%m-%d %H:%M:%S", nsecs),
+    pid, comm, args->fd, $fname, args->count, cgroup);
 
   @write_fd[tid] = args->fd;
-  @write_count[tid] = args->count;
+  @write_req_count[tid] = args->count;
   @write_start_time[tid] = elapsed;
 }
 
@@ -194,16 +203,17 @@ tracepoint:syscalls:sys_exit_write
   $fname = @fname[pid, $fd];
 
   printf("[%s] %d %s EXIT write fd=%d fname=%s ret=%d req=%d [CGID %llu]\n",
-         strftime("%Y-%m-%d %H:%M:%S", nsecs),
-         pid, comm, $fd, $fname, args->ret, @write_count[tid], cgroup);
+    strftime("%Y-%m-%d %H:%M:%S", nsecs),
+    pid, comm, $fd, $fname, args->ret, @write_req_count[tid], cgroup);
 
   if (args->ret > 0) {
     @write_bytes[$fname] = sum(args->ret);
     @write_time[$fname] = sum(elapsed - @write_start_time[tid]);
+    @write_count[$fname] = count();
   }
 
   delete(@write_fd[tid]);
-  delete(@write_count[tid]);
+  delete(@write_req_count[tid]);
   delete(@write_start_time[tid]);
 }
 
@@ -212,6 +222,7 @@ tracepoint:syscalls:sys_enter_close
 / cgroup == @tracked_cgid /
 {
   $fname = @fname[pid, args->fd];
+
   printf("[%s] %d %s ENTER close fd=%d fname=%s [CGID %llu]\n",
          strftime("%Y-%m-%d %H:%M:%S", nsecs),
          pid, comm, args->fd, $fname, cgroup);
@@ -226,21 +237,9 @@ tracepoint:syscalls:sys_exit_close
   $fname = @fname[pid, $fd];
 
   printf("[%s] %d %s EXIT close fd=%d fname=%s ret=%d [CGID %llu]\n",
-         strftime("%Y-%m-%d %H:%M:%S", nsecs),
-         pid, comm, $fd, $fname, args->ret, cgroup);
+    strftime("%Y-%m-%d %H:%M:%S", nsecs),
+    pid, comm, $fd, $fname, args->ret, cgroup);
 
   delete(@close_fd[tid]);
   delete(@fname[pid, $fd]);
-}
-
-/* process exit within cgroup */
-tracepoint:sched:sched_process_exit
-/ cgroup == @tracked_cgid /
-{
-  printf("[%s] %d %s EXIT_PROCESS [CGID %llu]\n",
-         strftime("%Y-%m-%d %H:%M:%S", nsecs), pid, comm, cgroup);
-
-  delete(@fname[pid, 0]);
-  delete(@fname[pid, 1]);
-  delete(@fname[pid, 2]);
 }
