@@ -18,10 +18,10 @@ The docker image is available (examples in `docker-compose.yaml`):
 docker pull ghcr.io/amirhnajafiz/flap:v0.0.0-beta-2
 ```
 
-## TODO
+## Operator
 
-- [ ] List of required mount points
-- [ ] List of requried capabilities needed for the main process
-- [ ] Separate pipeline for beta images
-- [ ] K8S Operator to update manifests upon pod creation using annotations/labels
-- [ ] Live monitoring (exporting the results as Prometheus metrics)
+1. Webhook on pod creation
+2. Extract the host
+3. Signals the host daemon (pod uid, namespace, and container)
+4. Starts tracing
+5. Live exports the results
