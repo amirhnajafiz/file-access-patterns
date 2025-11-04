@@ -36,7 +36,7 @@ cgid=""
 out=""
 
 # parse options
-while [[ $# -gt 0 ]]; do
+while [ $# -gt 0 ]; do
   case "$1" in
     -c|--cmd)   cmd="$2"; shift 2 ;;
     -p|--pid)   pid="$2"; shift 2 ;;
