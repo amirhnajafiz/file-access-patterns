@@ -4,52 +4,88 @@
 
 BEGIN
 {
-  printf("[%s] START tracing file-access events\n", strftime("%Y-%m-%d %H:%M:%S", nsecs));
-
   @fname[$1, 0] = "STDIN";
   @fname[$1, 1] = "STDOUT";
   @fname[$1, 2] = "STDERR";
   @tracked[$1] = 1;
 
-  printf("[%s] Tracking PID %d...\n", strftime("%Y-%m-%d %H:%M:%S", nsecs), $1);
+  printf("[%s] START tracing file-access events for PID %llu\n", 
+    strftime("%Y-%m-%d %H:%M:%S", nsecs), $1);
 }
 
 /* when we see a fork, if parent is tracked then also track child */
 tracepoint:sched:sched_process_fork
 / @tracked[args->parent_pid] /
 {
-  printf("[%s] %d %s FORK -> %d %s\n", strftime("%Y-%m-%d %H:%M:%S", nsecs),
-         args->parent_pid, args->parent_comm, args->child_pid, args->child_comm);
+  printf("[%s] %d %s FORK -> %d %s\n", 
+    strftime("%Y-%m-%d %H:%M:%S", nsecs),
+    args->parent_pid, args->parent_comm, args->child_pid, args->child_comm);
 
   @fname[pid, 0] = "STDIN";
   @fname[pid, 1] = "STDOUT";
   @fname[pid, 2] = "STDERR";
   @tracked[args->child_pid] = 1;
-
-  printf("[%s] Tracking PID %d...\n", strftime("%Y-%m-%d %H:%M:%S", nsecs), args->child_pid);
 }
 
 /* when exec happens, if old_pid tracked ensure that the new pid is also tracked */
 tracepoint:sched:sched_process_exec
 / @tracked[args->old_pid] /
 {
-  printf("[%s] %d %s EXEC %d %s\n", strftime("%Y-%m-%d %H:%M:%S", nsecs),
-         args->old_pid, comm, args->pid, str(args->filename));
+  printf("[%s] %d %s EXEC %d %s\n",
+    strftime("%Y-%m-%d %H:%M:%S", nsecs),
+    args->old_pid, comm, args->pid, str(args->filename));
 
   @fname[pid, 0] = "STDIN";
   @fname[pid, 1] = "STDOUT";
   @fname[pid, 2] = "STDERR";
   @tracked[args->pid] = 1;
-
-  printf("[%s] Tracking PID %d...\n", strftime("%Y-%m-%d %H:%M:%S", nsecs), args->pid);
 }
 
-/* openat enter + exit, map (pid, fd) pairs to filenames */
+/* open enter + exit */
+tracepoint:syscalls:sys_enter_open
+/ @tracked[pid] /
+{
+  printf("[%s] %d %s ENTER open fname=%s flags=0x%x mode=0%o\n",
+    strftime("%Y-%m-%d %H:%M:%S", nsecs),
+    pid, comm, str(args->filename), args->flags, args->mode);
+
+  @open_fname[tid] = args->filename;
+}
+
+tracepoint:syscalls:sys_exit_open
+/ @tracked[pid] /
+{
+  $fname = str(@open_fname[tid]);
+
+  printf("[%s] %d %s EXIT open fname=%s ret=%d\n",
+    strftime("%Y-%m-%d %H:%M:%S", nsecs),
+    pid, comm, $fname, args->ret);
+
+  if(args->ret > 0){
+    @fname[pid, args->ret] = $fname;
+    // counting the overall bytes used in this file
+    @read_bytes[$fname] = sum(0);
+    @write_bytes[$fname] = sum(0);
+
+    // counting the overall time this file was open
+    @read_time[$fname] = sum(0);
+    @write_time[$fname] = sum(0);
+
+    // counting the number of times a file is accesses
+    @read_count[$fname] = count();
+    @write_count[$fname] = count();
+  }
+
+  delete(@open_fname[tid]);
+}
+
+/* openat enter + exit */
 tracepoint:syscalls:sys_enter_openat
 / @tracked[pid] /
 {
-  printf("[%s] %d %s ENTER openat dfd=%d fname=%s flags=0x%x mode=0%o\n", strftime("%Y-%m-%d %H:%M:%S", nsecs),
-         pid, comm, args->dfd, str(args->filename), args->flags, args->mode);
+  printf("[%s] %d %s ENTER openat dfd=%d fname=%s flags=0x%x mode=0%o\n",
+    strftime("%Y-%m-%d %H:%M:%S", nsecs),
+    pid, comm, args->dfd, str(args->filename), args->flags, args->mode);
 
   @open_fname[tid] = args->filename;
 }
@@ -59,27 +95,37 @@ tracepoint:syscalls:sys_exit_openat
 {
   $fname = str(@open_fname[tid]);
 
-  printf("[%s] %d %s EXIT openat fname=%s ret=%d\n", strftime("%Y-%m-%d %H:%M:%S", nsecs),
-         pid, comm, $fname, args->ret);
+  printf("[%s] %d %s EXIT openat fname=%s ret=%d\n",
+    strftime("%Y-%m-%d %H:%M:%S", nsecs),
+    pid, comm, $fname, args->ret);
 
-  if(args->ret >= 0){
+  if(args->ret > 0){
     @fname[pid, args->ret] = $fname;
+    // counting the overall bytes used in this file
     @read_bytes[$fname] = sum(0);
     @write_bytes[$fname] = sum(0);
+
+    // counting the overall time this file was open
     @read_time[$fname] = sum(0);
     @write_time[$fname] = sum(0);
+
+    // counting the number of times a file is accesses
+    @read_count[$fname] = count();
+    @write_count[$fname] = count();
   }
 
   delete(@open_fname[tid]);
 }
 
-/* dup enter + exit, update fname map in case of dup */
+/* dup enter + exit */
 tracepoint:syscalls:sys_enter_dup
 / @tracked[pid] /
 {
   $fname = @fname[pid, args->fildes];
-  printf("[%s] %d %s ENTER dup fildes=%d fname=%s\n", strftime("%Y-%m-%d %H:%M:%S", nsecs),
-         pid, comm, args->fildes, $fname);
+
+  printf("[%s] %d %s ENTER dup fildes=%d fname=%s\n",
+    strftime("%Y-%m-%d %H:%M:%S", nsecs), pid, comm, args->fildes, $fname);
+  
   @dup_fd[tid] = args->fildes;
 }
 
@@ -89,8 +135,8 @@ tracepoint:syscalls:sys_exit_dup
   $fd = @dup_fd[tid];
   $fname = @fname[pid, $fd];
 
-  printf("[%s] %d %s EXIT dup fd=%d fname=%s ret=%d\n", strftime("%Y-%m-%d %H:%M:%S", nsecs),
-         pid, comm, $fd, $fname, args->ret);
+  printf("[%s] %d %s EXIT dup fd=%d fname=%s ret=%d\n",
+    strftime("%Y-%m-%d %H:%M:%S", nsecs), pid, comm, $fd, $fname, args->ret);
 
   if(args->ret != -1){
     @fname[pid, args->ret] = $fname;
@@ -100,13 +146,16 @@ tracepoint:syscalls:sys_exit_dup
   delete(@dup_fd[tid]);
 }
 
-/* dup2 enter + exit, update fname map in case of dup2 */
+/* dup2 enter + exit */
 tracepoint:syscalls:sys_enter_dup2
 / @tracked[pid] /
 {
   $fname = @fname[pid, args->oldfd];
-  printf("[%s] %d %s ENTER dup2 oldfd=%d newfd=%d fname=%s\n", strftime("%Y-%m-%d %H:%M:%S", nsecs),
-         pid, comm, args->oldfd, args->newfd, $fname);
+
+  printf("[%s] %d %s ENTER dup2 oldfd=%d newfd=%d fname=%s\n",
+    strftime("%Y-%m-%d %H:%M:%S", nsecs),
+    pid, comm, args->oldfd, args->newfd, $fname);
+  
   @dup_fd[tid] = args->oldfd;
 }
 
@@ -116,8 +165,9 @@ tracepoint:syscalls:sys_exit_dup2
   $fd = @dup_fd[tid];
   $fname = @fname[pid, $fd];
 
-  printf("[%s] %d %s EXIT dup2 fd=%d fname=%s ret=%d\n", strftime("%Y-%m-%d %H:%M:%S", nsecs),
-         pid, comm, $fd, $fname, args->ret);
+  printf("[%s] %d %s EXIT dup2 fd=%d fname=%s ret=%d\n",
+    strftime("%Y-%m-%d %H:%M:%S", nsecs),
+    pid, comm, $fd, $fname, args->ret);
   
   if(args->ret != -1){
     @fname[pid, args->ret] = $fname;
@@ -127,13 +177,16 @@ tracepoint:syscalls:sys_exit_dup2
   delete(@dup_fd[tid]);
 }
 
-/* newfstat enter + exit, count total number of fstats */
+/* newfstat enter + exit */
 tracepoint:syscalls:sys_enter_newfstat
 / @tracked[pid] /
 {
   $fname = @fname[pid, args->fd];
-  printf("[%s] %d %s ENTER newfstat fd=%d fname=%s\n", strftime("%Y-%m-%d %H:%M:%S", nsecs),
-         pid, comm, args->fd, $fname);
+
+  printf("[%s] %d %s ENTER newfstat fd=%d fname=%s\n",
+    strftime("%Y-%m-%d %H:%M:%S", nsecs),
+    pid, comm, args->fd, $fname);
+  
   @fstat_fd[tid] = args->fd;
 }
 
@@ -143,8 +196,9 @@ tracepoint:syscalls:sys_exit_newfstat
   $fd = @fstat_fd[tid];
   $fname = @fname[pid, $fd];
 
-  printf("[%s] %d %s EXIT newfstat fd=%d fname=%s ret=%d\n", strftime("%Y-%m-%d %H:%M:%S", nsecs),
-         pid, comm, $fd, $fname, args->ret);
+  printf("[%s] %d %s EXIT newfstat fd=%d fname=%s ret=%d\n",
+    strftime("%Y-%m-%d %H:%M:%S", nsecs),
+    pid, comm, $fd, $fname, args->ret);
   
   if(args->ret != -1){
     @num_fstat[$fname] = count();
@@ -153,17 +207,18 @@ tracepoint:syscalls:sys_exit_newfstat
   delete(@fstat_fd[tid]);
 }
 
-/* read enter + exit, sum bytes read and total time */
+/* read enter + exit */
 tracepoint:syscalls:sys_enter_read
 / @tracked[pid] /
 {
   $fname = @fname[pid, args->fd];
 
-  printf("[%s] %d %s ENTER read fd=%d fname=%s count=%d\n", strftime("%Y-%m-%d %H:%M:%S", nsecs),
-         pid, comm, args->fd, $fname, args->count);
+  printf("[%s] %d %s ENTER read fd=%d fname=%s count=%d\n",
+    strftime("%Y-%m-%d %H:%M:%S", nsecs),
+    pid, comm, args->fd, $fname, args->count);
   
   @read_fd[tid] = args->fd;
-  @read_count[tid] = args->count;
+  @read_req_count[tid] = args->count;
   @read_start_time[tid] = elapsed;
 }
 
@@ -173,30 +228,33 @@ tracepoint:syscalls:sys_exit_read
   $fd = @read_fd[tid];
   $fname = @fname[pid, $fd];
 
-  printf("[%s] %d %s EXIT read fd=%d fname=%s ret=%d req=%d\n", strftime("%Y-%m-%d %H:%M:%S", nsecs),
-         pid, comm, $fd, $fname, args->ret, @read_count[tid]);
+  printf("[%s] %d %s EXIT read fd=%d fname=%s ret=%d req=%d\n",
+    strftime("%Y-%m-%d %H:%M:%S", nsecs),
+    pid, comm, $fd, $fname, args->ret, @read_req_count[tid]);
   
-  if(args->ret != -1){
+  if(args->ret > 0){
     @read_bytes[$fname] = sum(args->ret);
     @read_time[$fname] = sum(elapsed - @read_start_time[tid]);
+    @read_count[$fname] = count();
   }
 
   delete(@read_fd[tid]);
-  delete(@read_count[tid]);
+  delete(@read_req_count[tid]);
   delete(@read_start_time[tid]);
 }
 
-/* write enter + exist, sum bytes wrote and total time */
+/* write enter + exit */
 tracepoint:syscalls:sys_enter_write
 / @tracked[pid] /
 {
   $fname = @fname[pid, args->fd];
 
-  printf("[%s] %d %s ENTER write fd=%d fname=%s count=%d\n", strftime("%Y-%m-%d %H:%M:%S", nsecs),
-         pid, comm, args->fd, $fname, args->count);
+  printf("[%s] %d %s ENTER write fd=%d fname=%s count=%d\n",
+    strftime("%Y-%m-%d %H:%M:%S", nsecs),
+    pid, comm, args->fd, $fname, args->count);
 
   @write_fd[tid] = args->fd;
-  @write_count[tid] = args->count;
+  @write_req_count[tid] = args->count;
   @write_start_time[tid] = elapsed;
 }
 
@@ -206,26 +264,31 @@ tracepoint:syscalls:sys_exit_write
   $fd = @write_fd[tid];
   $fname = @fname[pid, $fd];
 
-  printf("[%s] %d %s EXIT write fd=%d fname=%s ret=%d req=%d\n", strftime("%Y-%m-%d %H:%M:%S", nsecs),
-         pid, comm, $fd, $fname, args->ret, @write_count[tid]);
+  printf("[%s] %d %s EXIT write fd=%d fname=%s ret=%d req=%d\n",
+    strftime("%Y-%m-%d %H:%M:%S", nsecs),
+    pid, comm, $fd, $fname, args->ret, @write_req_count[tid]);
 
-  if(args->ret != -1){
+  if(args->ret > 0){
     @write_bytes[$fname] = sum(args->ret);
     @write_time[$fname] = sum(elapsed - @write_start_time[tid]);
-    delete(@write_start_time[tid]);
+    @write_count[$fname] = count();
   }
 
   delete(@write_fd[tid]);
-  delete(@write_count[tid]);
+  delete(@write_req_count[tid]);
+  delete(@write_start_time[tid]);
 }
 
-/* close enter + exit, cleanup helper map entries */
+/* close enter + exit */
 tracepoint:syscalls:sys_enter_close
 / @tracked[pid] /
 {
   $fname = @fname[pid, args->fd];
-  printf("[%s] %d %s ENTER close fd=%d fname=%s\n", strftime("%Y-%m-%d %H:%M:%S", nsecs),
-         pid, comm, args->fd, $fname);
+
+  printf("[%s] %d %s ENTER close fd=%d fname=%s\n",
+    strftime("%Y-%m-%d %H:%M:%S", nsecs),
+    pid, comm, args->fd, $fname);
+  
   @close_fd[tid] = args->fd;
 }
 
@@ -235,8 +298,9 @@ tracepoint:syscalls:sys_exit_close
   $fd = @close_fd[tid];
   $fname = @fname[pid, $fd];
 
-  printf("[%s] %d %s EXIT close fd=%d fname=%s ret=%d\n", strftime("%Y-%m-%d %H:%M:%S", nsecs),
-         pid, comm, $fd, $fname, args->ret);
+  printf("[%s] %d %s EXIT close fd=%d fname=%s ret=%d\n",
+    strftime("%Y-%m-%d %H:%M:%S", nsecs),
+    pid, comm, $fd, $fname, args->ret);
 
   delete(@close_fd[tid]);
   delete(@fname[pid, $fd]);

@@ -224,8 +224,8 @@ tracepoint:syscalls:sys_enter_close
   $fname = @fname[pid, args->fd];
 
   printf("[%s] %d %s ENTER close fd=%d fname=%s [CGID %llu]\n",
-         strftime("%Y-%m-%d %H:%M:%S", nsecs),
-         pid, comm, args->fd, $fname, cgroup);
+    strftime("%Y-%m-%d %H:%M:%S", nsecs),
+    pid, comm, args->fd, $fname, cgroup);
 
   @close_fd[tid] = args->fd;
 }
