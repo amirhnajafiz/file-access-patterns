@@ -4,7 +4,7 @@
 
 BEGIN
 {
-  @tracked_comm = (str)$1;
+  @tracked_comm = str($1);
 
   printf("[%s] START tracing file-access events for %s\n", 
     strftime("%Y-%m-%d %H:%M:%S", nsecs), str($1));
