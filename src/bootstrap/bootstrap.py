@@ -1,21 +1,37 @@
 #!/usr/bin/env python3
-# file: loader.py
+# file: bootstrap.py
 
 import argparse
 import logging
+import sys
+import time
+from cri import get_cid_by_name
 
 
 
 def main(pod: str, ns: str, container: str) -> None:
     logging.info(
         "Monitoring Container: {} for Pod: {} in Namespace: {}".format(
-        container,
-        pod,
-        ns,
-    ))
+            container,
+            pod,
+            ns,
+        )
+    )
 
     while True:
-        break
+        cid, err = get_cid_by_name(container=container, pod=pod, ns=ns)
+        if cid is None:
+            logging.warning(
+                "get cid failed: {}".format(
+                    err
+                )
+            )
+        else:
+            print(cid)
+            # run the tracer: ./trace.sh -cg cid -o /tmp/logs.txt
+            sys.exit(0)
+        
+        time.sleep(0.5)
 
 if __name__ == "__main__":
     # set the logger
