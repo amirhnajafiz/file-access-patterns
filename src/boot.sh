@@ -11,7 +11,7 @@ container_name="$1"
 pod_name="$2"
 namespace="$3"
 
-if [ -n "$4"]; then
+if [ "$#" -eq 3]; then
     command="$4"
 else
     command=""
