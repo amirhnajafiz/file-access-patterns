@@ -10,7 +10,12 @@ set -eu
 container_name="$1"
 pod_name="$2"
 namespace="$3"
-command="$4"
+
+if [ -n "$4"]; then
+    command="$4"
+else
+    command=""
+fi
 
 if [ -n "$command"]; then
     echo "looking for ${container_name}/${command} in ${namespace}/${pod_name} ..."
