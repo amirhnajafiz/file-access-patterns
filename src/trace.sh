@@ -15,10 +15,10 @@ set -eu
 print_usage() {
   cat <<EOF
 Usage:
-  $0 -c/--cmd   "command"   -o output     # trace a command and its subprocesses (bpftrace/ctrace.bt)
-  $0 -p/--pid   pid         -o output     # trace an existing process by PID (bpftrace/ptrace.bt)
-  $0 -n/--name  name        -o output     # trace all processes by name (bpftrace/ntrace.bt)
-  $0 -cg/--cgid cgroupid    -o output     # trace processes by cgroup ID (bpftrace/ctrace_cgid.bt)
+  $0 -c/--cmd   "command"   -o output     # trace a command and its subprocesses (bpftrace/tracings/cmd_trace.bt)
+  $0 -p/--pid   pid         -o output     # trace an existing process by PID (bpftrace/tracings/pid_trace.bt)
+  $0 -n/--name  name        -o output     # trace all processes by name (bpftrace/tracings/comm_trace.bt)
+  $0 -cg/--cgid cgroupid    -o output     # trace processes by cgroup ID (bpftrace/cgroups/cgroup_trace.bt)
 
 Notes:
   - Precedence order: command > pid > name > cgroupid
@@ -72,11 +72,8 @@ ensure_script() {
 
 # decide what to run
 if [ -n "$cmd" ]; then
-  ensure_script "scripts/ctrace.bt"
-  printf "Running: bpftrace -c %s scripts/ctrace.bt > %s\n" "'$cmd'" "$out"
-  # use exec so the shell is replaced by bpftrace (optional). We capture exit code.
-  # quoting $cmd carefully so it's passed as a single argument to -c.
-  bpftrace -c "$cmd" scripts/ctrace.bt > "$out"
+  ensure_script "bpftrace/tracings/cmd_trace.bt"
+  bpftrace -c "$cmd" bpftrace/tracings/cmd_trace.bt > "$out"
   rc=$?
   if [ $rc -ne 0 ]; then
     printf "bpftrace exited with code %d\n" "$rc" >&2
@@ -84,14 +81,14 @@ if [ -n "$cmd" ]; then
   exit $rc
 
 elif [ -n "$pid" ]; then
-  ensure_script "scripts/ptrace.bt"
+  ensure_script "bpftrace/tracings/pid_trace.bt"
+
   # validate pid is numeric
   case $pid in
     ''|*[!0-9]*) printf "Error: pid must be a positive integer.\n" >&2; exit 2 ;;
   esac
 
-  printf "Running: bpftrace -p %s scripts/ptrace.bt > %s\n" "$pid" "$out"
-  bpftrace scripts/ptrace.bt "$pid" > "$out"
+  bpftrace bpftrace/tracings/pid_trace.bt "$pid" > "$out"
   rc=$?
   if [ $rc -ne 0 ]; then
     printf "bpftrace exited with code %d\n" "$rc" >&2
@@ -99,11 +96,8 @@ elif [ -n "$pid" ]; then
   exit $rc
 
 elif [ -n "$name" ]; then
-  ensure_script "scripts/ntrace.bt"
-  printf "Running: bpftrace scripts/ntrace.bt %s > %s\n" "'$name'" "$out"
-  # use exec so the shell is replaced by bpftrace (optional). We capture exit code.
-  # quoting $cmd carefully so it's passed as a single argument to -c.
-  bpftrace scripts/ntrace.bt "$name" > "$out"
+  ensure_script "bpftrace/tracings/comm_trace.bt"
+  bpftrace bpftrace/tracings/comm_trace.bt "$name" > "$out"
   rc=$?
   if [ $rc -ne 0 ]; then
     printf "bpftrace exited with code %d\n" "$rc" >&2
@@ -111,14 +105,14 @@ elif [ -n "$name" ]; then
   exit $rc 
 
 elif [ -n "$cgid" ]; then
-  ensure_script "scripts/ctrace_cgid.bt"
+  ensure_script "bpftrace/cgroups/cgroup_trace.bt"
+
   # validate cgid is numeric
   case $cgid in
     ''|*[!0-9]*) printf "Error: cgroupid must be a positive integer.\n" >&2; exit 2 ;;
   esac
 
-  printf "Running: bpftrace -p %s scripts/ctrace_cgid.bt > %s\n" "$cgid" "$out"
-  bpftrace scripts/ctrace_cgid.bt "$cgid" > "$out"
+  bpftrace bpftrace/cgroups/cgroup_trace.bt "$cgid" > "$out"
   rc=$?
   if [ $rc -ne 0 ]; then
     printf "bpftrace exited with code %d\n" "$rc" >&2

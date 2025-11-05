@@ -47,7 +47,7 @@ echo "igniting tracer"
 
 # call the tracer by cgroup
 if [ -n "$command" ]; then
-    sudo bpftrace scripts/cntrace_cgid.bt "${cgroupid}" "${command}"
+    sudo bpftrace bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}"
 else
-    sudo bpftrace scripts/ctrace_cgid.bt "${cgroupid}"
+    sudo bpftrace bpftrace/cgroups/cgroup_trace.bt "${cgroupid}"
 fi

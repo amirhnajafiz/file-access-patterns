@@ -1,18 +1,21 @@
 #!/usr/bin/env bpftrace
-// file: comm_trace.bt
-// sudo bpftrace -o /tmp/tracing.out comm_trace.bt <NAME>
+// file: src/bpftrace/tracings/cmd_trace.bt
+// sudo bpftrace -c "./myapp arg1 arg2" -o /tmp/tracing.out cmd_trace.bt
 
 BEGIN
 {
-  @tracked_comm = str($1);
+  @fname[cpid, 0] = "STDIN";
+  @fname[cpid, 1] = "STDOUT";
+  @fname[cpid, 2] = "STDERR";
+  @tracked[cpid] = 1;
 
-  printf("[%s] START tracing file-access events for %s\n", 
-    strftime("%Y-%m-%d %H:%M:%S", nsecs), str($1));
+  printf("[%s] START tracing file-access events for CPID %llu\n", 
+    strftime("%Y-%m-%d %H:%M:%S", nsecs), cpid);
 }
 
 /* when we see a fork, if parent is tracked then also track child */
 tracepoint:sched:sched_process_fork
-/ comm == @tracked_comm || @tracked[args->parent_pid] /
+/ @tracked[args->parent_pid] /
 {
   printf("[%s] %d %s FORK -> %d %s\n",
     strftime("%Y-%m-%d %H:%M:%S", nsecs),
@@ -26,7 +29,7 @@ tracepoint:sched:sched_process_fork
 
 /* when exec happens, if old_pid tracked ensure that the new pid is also tracked */
 tracepoint:sched:sched_process_exec
-/ comm == @tracked_comm || @tracked[args->old_pid] /
+/ @tracked[args->old_pid] /
 {
   printf("[%s] %d %s EXEC %d %s\n",
     strftime("%Y-%m-%d %H:%M:%S", nsecs),
@@ -45,7 +48,7 @@ tracepoint:syscalls:sys_enter_open
   printf("[%s] %d %s ENTER open fname=%s flags=0x%x mode=0%o\n",
     strftime("%Y-%m-%d %H:%M:%S", nsecs),
     pid, comm, str(args->filename), args->flags, args->mode);
-
+  
   @open_fname[tid] = args->filename;
 }
 
@@ -136,16 +139,16 @@ tracepoint:syscalls:sys_exit_dup
   printf("[%s] %d %s EXIT dup fd=%d fname=%s ret=%d\n",
     strftime("%Y-%m-%d %H:%M:%S", nsecs),
     pid, comm, $fd, $fname, args->ret);
-
+  
   if(args->ret != -1){
     @fname[pid, args->ret] = $fname;
   }
-
+  
   delete(@fname[pid, $fd]);
   delete(@dup_fd[tid]);
 }
 
-/* dup2 enter + exit */
+/* dup2 enter + exit, update fname map in case of dup2 */
 tracepoint:syscalls:sys_enter_dup2
 / @tracked[pid] /
 {
@@ -185,7 +188,7 @@ tracepoint:syscalls:sys_enter_newfstat
   printf("[%s] %d %s ENTER newfstat fd=%d fname=%s\n",
     strftime("%Y-%m-%d %H:%M:%S", nsecs),
     pid, comm, args->fd, $fname);
-
+  
   @fstat_fd[tid] = args->fd;
 }
 
@@ -242,7 +245,7 @@ tracepoint:syscalls:sys_exit_read
   delete(@read_start_time[tid]);
 }
 
-/* write enter + exit */
+/* write enter + exist */
 tracepoint:syscalls:sys_enter_write
 / @tracked[pid] /
 {
@@ -251,7 +254,7 @@ tracepoint:syscalls:sys_enter_write
   printf("[%s] %d %s ENTER write fd=%d fname=%s count=%d\n",
     strftime("%Y-%m-%d %H:%M:%S", nsecs),
     pid, comm, args->fd, $fname, args->count);
-
+  
   @write_fd[tid] = args->fd;
   @write_req_count[tid] = args->count;
   @write_start_time[tid] = elapsed;
@@ -266,7 +269,7 @@ tracepoint:syscalls:sys_exit_write
   printf("[%s] %d %s EXIT write fd=%d fname=%s ret=%d req=%d\n",
     strftime("%Y-%m-%d %H:%M:%S", nsecs),
     pid, comm, $fd, $fname, args->ret, @write_req_count[tid]);
-
+  
   if(args->ret > 0){
     @write_bytes[$fname] = sum(args->ret);
     @write_time[$fname] = sum(elapsed - @write_start_time[tid]);
@@ -300,7 +303,7 @@ tracepoint:syscalls:sys_exit_close
   printf("[%s] %d %s EXIT close fd=%d fname=%s ret=%d\n",
     strftime("%Y-%m-%d %H:%M:%S", nsecs),
     pid, comm, $fd, $fname, args->ret);
-
+  
   delete(@close_fd[tid]);
   delete(@fname[pid, $fd]);
 }
