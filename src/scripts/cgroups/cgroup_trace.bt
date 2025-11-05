@@ -1,6 +1,6 @@
 #!/usr/bin/env bpftrace
-// file: ctrace_cgid.bt
-// usage: sudo bpftrace -o /tmp/tracing.out ctrace_cgid.bt <CGROUP_ID>
+// file: cgroup_trace.bt
+// usage: sudo bpftrace -o /tmp/tracing.out cgroup_trace.bt <CGROUP_ID>
 
 BEGIN
 {
