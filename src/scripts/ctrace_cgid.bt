@@ -171,9 +171,15 @@ tracepoint:syscalls:sys_exit_read
     pid, comm, $fd, $fname, args->ret, @read_req_count[tid], cgroup);
 
   if (args->ret > 0) {
-    @read_bytes[$fname] = sum(args->ret);
-    @read_time[$fname] = sum(elapsed - @read_start_time[tid]);
-    @read_count[$fname] = count();
+    if ($fname == "") {
+      @un_read_bytes[pid, $fd] = sum(args->ret);
+      @un_read_time[pid, $fd] = sum(elapsed - @read_start_time[tid]);
+      @un_read_count[pid, $fd] = count();
+    } else {
+      @read_bytes[$fname] = sum(args->ret);
+      @read_time[$fname] = sum(elapsed - @read_start_time[tid]);
+      @read_count[$fname] = count();
+    }
   }
 
   delete(@read_fd[tid]);
@@ -207,9 +213,15 @@ tracepoint:syscalls:sys_exit_write
     pid, comm, $fd, $fname, args->ret, @write_req_count[tid], cgroup);
 
   if (args->ret > 0) {
-    @write_bytes[$fname] = sum(args->ret);
-    @write_time[$fname] = sum(elapsed - @write_start_time[tid]);
-    @write_count[$fname] = count();
+    if ($fname == "") {
+      @un_write_bytes[pid, $fd] = sum(args->ret);
+      @un_write_time[pid, $fd] = sum(elapsed - @write_start_time[tid]);
+      @un_write_count[pid, $fd] = count();
+    } else {
+      @write_bytes[$fname] = sum(args->ret);
+      @write_time[$fname] = sum(elapsed - @write_start_time[tid]);
+      @write_count[$fname] = count();
+    }
   }
 
   delete(@write_fd[tid]);
