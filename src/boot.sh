@@ -6,12 +6,17 @@
 
 set -eu
 
-# input: (container, pod (name/id), namespace)
+# input: (container, pod (name/id), namespace, command)
 container_name="$1"
 pod_name="$2"
 namespace="$3"
+command="$4"
 
-echo "looking for ${container_name} in ${namespace}/${pod_name} ..."
+if [ -n "$command"]; then
+    echo "looking for ${container_name}/${command} in ${namespace}/${pod_name} ..."
+else
+    echo "looking for ${container_name} in ${namespace}/${pod_name} ..."
+fi
 
 # running: sudo crictl ps => output is containerid
 while true; do
@@ -37,4 +42,8 @@ cgroupid=$(stat -c %i "${path}")
 echo "igniting tracer"
 
 # call the tracer by cgroup
-sudo bpftrace scripts/ctrace_cgid.bt "${cgroupid}"
+if [ -n "$command"]; then
+    sudo bpftrace scripts/cntrace_cgid.bt "${cgroupid}" "${command}"
+else
+    sudo bpftrace scripts/ctrace_cgid.bt "${cgroupid}"
+fi
