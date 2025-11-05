@@ -11,13 +11,12 @@ container_name="$1"
 pod_name="$2"
 namespace="$3"
 
-if [ "$#" -eq 3]; then
+command=""
+if [ "$#" -ge 4 ]; then
     command="$4"
-else
-    command=""
 fi
 
-if [ -n "$command"]; then
+if [ -n "$command" ]; then
     echo "looking for ${container_name}/${command} in ${namespace}/${pod_name} ..."
 else
     echo "looking for ${container_name} in ${namespace}/${pod_name} ..."
@@ -47,7 +46,7 @@ cgroupid=$(stat -c %i "${path}")
 echo "igniting tracer"
 
 # call the tracer by cgroup
-if [ -n "$command"]; then
+if [ -n "$command" ]; then
     sudo bpftrace scripts/cntrace_cgid.bt "${cgroupid}" "${command}"
 else
     sudo bpftrace scripts/ctrace_cgid.bt "${cgroupid}"
