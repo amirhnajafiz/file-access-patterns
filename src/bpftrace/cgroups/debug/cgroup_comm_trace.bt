@@ -1,5 +1,5 @@
 #!/usr/bin/env bpftrace
-// file: src/bpftrace/cgroups/cgroup_comm_trace.bt
+// file: src/bpftrace/cgroups/debug/cgroup_comm_trace.bt
 // usage: sudo bpftrace -o /tmp/tracing.out cgroup_comm_trace.bt <CGROUP_ID> <NAME>
 
 BEGIN

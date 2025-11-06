@@ -14,7 +14,7 @@ BEGIN
 tracepoint:syscalls:sys_enter_open
 / cgroup == @tracked_cgid /
 {
-  @open_fname[tid] = args->filename;
+  @open_fname[tid] = str(args->filename);
 }
 
 tracepoint:syscalls:sys_exit_open
@@ -44,7 +44,7 @@ tracepoint:syscalls:sys_exit_open
 tracepoint:syscalls:sys_enter_openat
 / cgroup == @tracked_cgid /
 {
-  @open_fname[tid] = args->filename;
+  @open_fname[tid] = str(args->filename);
 }
 
 tracepoint:syscalls:sys_exit_openat
