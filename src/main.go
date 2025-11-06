@@ -26,7 +26,7 @@ func main() {
 
 	// wait group for workers
 	var wg sync.WaitGroup
-	numWorkers := 10
+	numWorkers := 1
 
 	// start the workers
 	for range numWorkers {
