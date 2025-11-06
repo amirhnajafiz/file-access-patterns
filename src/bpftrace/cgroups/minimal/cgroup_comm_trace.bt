@@ -202,7 +202,7 @@ tracepoint:syscalls:sys_exit_close
 }
 
 /* 1 minute interval to print stats */
-interval:s:10
+interval:s:60
 {
   print("---- rotating ----\n");
   time("%H:%M:%S ");
