@@ -1,6 +1,6 @@
 #!/usr/bin/env bpftrace
-// file: src/bpftrace/cgroups/cgroup_trace.bt
-// usage: sudo bpftrace -o /tmp/tracing.out cgroup_trace.bt <CGROUP_ID>
+// file: src/bpftrace/cgroups/cgroup_trace_refcount.bt
+// usage: sudo bpftrace -o /tmp/tracing.out cgroup_trace_refcount.bt <CGROUP_ID>
 
 BEGIN
 {
@@ -24,15 +24,13 @@ tracepoint:syscalls:sys_exit_open
 
   if (args->ret >= 0) {
     @fname[pid, args->ret] = $fname;
-    // counting the overall bytes used in this file
+    @ref_count[pid, args->ret] = 1;  // initialize ref count
+
+    // initialize counting maps
     @read_bytes[$fname] = sum(0);
     @write_bytes[$fname] = sum(0);
-
-    // counting the overall time this file was open
     @read_time[$fname] = sum(0);
     @write_time[$fname] = sum(0);
-
-    // counting the number of times a file is accesses
     @read_count[$fname] = count();
     @write_count[$fname] = count();
   }
@@ -54,15 +52,13 @@ tracepoint:syscalls:sys_exit_openat
 
   if (args->ret >= 0) {
     @fname[pid, args->ret] = $fname;
-    // counting the overall bytes used in this file
+    @ref_count[pid, args->ret] = 1;  // initialize ref count
+
+    // initialize counting maps
     @read_bytes[$fname] = sum(0);
     @write_bytes[$fname] = sum(0);
-
-    // counting the overall time this file was open
     @read_time[$fname] = sum(0);
     @write_time[$fname] = sum(0);
-
-    // counting the number of times a file is accesses
     @read_count[$fname] = count();
     @write_count[$fname] = count();
   }
@@ -74,7 +70,6 @@ tracepoint:syscalls:sys_exit_openat
 tracepoint:syscalls:sys_enter_dup
 / cgroup == @tracked_cgid /
 {
-  $fname = @fname[pid, args->fildes];
   @dup_fd[tid] = args->fildes;
 }
 
@@ -86,9 +81,16 @@ tracepoint:syscalls:sys_exit_dup
 
   if (args->ret != -1) {
     @fname[pid, args->ret] = $fname;
+
+    // increment ref count on original fd if exists
+    $old_ref = @ref_count[pid, $fd];
+    if ($old_ref == 0) {
+      $old_ref = 1;
+    }
+    @ref_count[pid, $fd] = $old_ref + 1;
+    @ref_count[pid, args->ret] = $old_ref + 1;
   }
 
-  delete(@fname[pid, $fd]);
   delete(@dup_fd[tid]);
 }
 
@@ -96,8 +98,6 @@ tracepoint:syscalls:sys_exit_dup
 tracepoint:syscalls:sys_enter_dup2
 / cgroup == @tracked_cgid /
 {
-  $fname = @fname[pid, args->oldfd];
-  
   @dup_fd[tid] = args->oldfd;
 }
 
@@ -106,12 +106,19 @@ tracepoint:syscalls:sys_exit_dup2
 {
   $fd = @dup_fd[tid];
   $fname = @fname[pid, $fd];
-  
+
   if (args->ret != -1) {
     @fname[pid, args->ret] = $fname;
+
+    // increment ref count on original fd if exists
+    $old_ref = @ref_count[pid, $fd];
+    if ($old_ref == 0) {
+      $old_ref = 1;
+    }
+    @ref_count[pid, $fd] = $old_ref + 1;
+    @ref_count[pid, args->ret] = $old_ref + 1;
   }
 
-  delete(@fname[pid, $fd]);
   delete(@dup_fd[tid]);
 }
 
@@ -187,7 +194,6 @@ tracepoint:syscalls:sys_exit_write
 tracepoint:syscalls:sys_enter_close
 / cgroup == @tracked_cgid /
 {
-  $fname = @fname[pid, args->fd];
   @close_fd[tid] = args->fd;
 }
 
@@ -195,8 +201,14 @@ tracepoint:syscalls:sys_exit_close
 / cgroup == @tracked_cgid /
 {
   $fd = @close_fd[tid];
-  $fname = @fname[pid, $fd];
+  $ref = @ref_count[pid, $fd];
+
+  if ($ref > 1) {
+    @ref_count[pid, $fd] = $ref - 1;  // decrement ref count
+  } else {
+    delete(@ref_count[pid, $fd]);    // no more references, delete
+    delete(@fname[pid, $fd]);        // delete filename mapping
+  }
 
   delete(@close_fd[tid]);
-  delete(@fname[pid, $fd]);
 }

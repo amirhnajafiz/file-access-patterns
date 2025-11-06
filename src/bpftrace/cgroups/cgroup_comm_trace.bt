@@ -38,7 +38,7 @@ tracepoint:syscalls:sys_exit_open
     @write_count[$fname] = count();
   }
 
-  //delete(@open_fname[tid]);
+  delete(@open_fname[tid]);
 }
 
 /* openat enter + exit */
@@ -68,7 +68,7 @@ tracepoint:syscalls:sys_exit_openat
     @write_count[$fname] = count();
   }
 
-  //delete(@open_fname[tid]);
+  delete(@open_fname[tid]);
 }
 
 /* dup enter + exit */
