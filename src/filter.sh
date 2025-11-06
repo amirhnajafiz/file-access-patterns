@@ -33,8 +33,8 @@ while IFS= read -r line || [ -n "$line" ]; do
       pid="${BASH_REMATCH[2]}"
       fd="${BASH_REMATCH[3]}"
       value="${BASH_REMATCH[4]}"
-      # get filename via rlink.sh
-      file="$(sudo ./rlink.sh "$pid" "$fd" 2>/dev/null || echo "$pid::$fd")"
+      # get filename via utils/rlink.sh
+      file="$(sudo ./utils/rlink.sh "$pid" "$fd" 2>/dev/null || echo "$pid::$fd")"
       # remove "un_" prefix before printing
       op_no_un="${op#un_}"
       printf '@%s[%s]: %s\n' "$op_no_un" "$file" "$value"
