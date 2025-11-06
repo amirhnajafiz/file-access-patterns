@@ -204,7 +204,6 @@ tracepoint:syscalls:sys_exit_close
 interval:s:60
 {
   print("---- rotating ----\n");
-  time("%H:%M:%S ");
 
   print(@un_write_bytes);
   print(@un_write_time);
