@@ -18,4 +18,16 @@ if [ "$exit_status" -ne 0 ]; then
     echo "cgroup_comm_trace.bt failed"
 fi
 
+sudo bpftrace -dd "${directory}/minimal/cgroup_trace.bt" 1
+exit_status=$?
+if [ "$exit_status" -ne 0 ]; then
+    echo "minimal/cgroup_trace.bt failed"
+fi
+
+sudo bpftrace -dd -c "ls" "${directory}/minimal/cgroup_comm_trace.bt" 1 tmp
+exit_status=$?
+if [ "$exit_status" -ne 0 ]; then
+    echo "minimal/cgroup_comm_trace.bt failed"
+fi
+
 echo "passed all tests."
