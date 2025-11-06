@@ -20,7 +20,8 @@ tracepoint:syscalls:sys_enter_open
 tracepoint:syscalls:sys_exit_open
 / cgroup == @tracked_cgid /
 {
-  $fname = @open_fname[tid];
+  //$fname = @open_fname[tid]);
+  $fname = str(args->filename);
 
   if (args->ret >= 0) {
     @fname[pid, args->ret] = $fname;
@@ -37,7 +38,7 @@ tracepoint:syscalls:sys_exit_open
     @write_count[$fname] = count();
   }
 
-  //delete(@open_fname[tid]);
+  delete(@open_fname[tid]);
 }
 
 /* openat enter + exit */
@@ -50,7 +51,8 @@ tracepoint:syscalls:sys_enter_openat
 tracepoint:syscalls:sys_exit_openat
 / cgroup == @tracked_cgid /
 {
-  $fname = @open_fname[tid];
+  //$fname = @open_fname[tid];
+  $fname = str(args->filename);
 
   if (args->ret >= 0) {
     @fname[pid, args->ret] = $fname;
@@ -67,7 +69,7 @@ tracepoint:syscalls:sys_exit_openat
     @write_count[$fname] = count();
   }
 
-  //delete(@open_fname[tid]);
+  delete(@open_fname[tid]);
 }
 
 /* dup enter + exit */
@@ -88,8 +90,8 @@ tracepoint:syscalls:sys_exit_dup
     @fname[pid, args->ret] = $fname;
   }
 
-  //delete(@fname[pid, $fd]);
-  //delete(@dup_fd[tid]);
+  delete(@fname[pid, $fd]);
+  delete(@dup_fd[tid]);
 }
 
 /* dup2 enter + exit */
@@ -111,8 +113,8 @@ tracepoint:syscalls:sys_exit_dup2
     @fname[pid, args->ret] = $fname;
   }
 
-  //delete(@fname[pid, $fd]);
-  //delete(@dup_fd[tid]);
+  delete(@fname[pid, $fd]);
+  delete(@dup_fd[tid]);
 }
 
 /* read enter + exit */
@@ -197,6 +199,6 @@ tracepoint:syscalls:sys_exit_close
   $fd = @close_fd[tid];
   $fname = @fname[pid, $fd];
 
-  //delete(@close_fd[tid]);
-  //delete(@fname[pid, $fd]);
+  delete(@close_fd[tid]);
+  delete(@fname[pid, $fd]);
 }
