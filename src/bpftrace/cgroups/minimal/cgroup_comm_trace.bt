@@ -206,39 +206,21 @@ interval:s:10
 {
   print("---- rotating ----\n");
 
-  // snapshot the maps into temporary variables
-  $snapshot_un_write_bytes = @un_write_bytes;
-  $snapshot_un_write_time = @un_write_time;
-  $snapshot_un_write_count = @un_write_count;
+  print(@un_write_bytes);
+  print(@un_write_time);
+  print(@un_write_count);
 
-  $snapshot_write_bytes = @write_bytes;
-  $snapshot_write_time = @write_time;
-  $snapshot_write_count = @write_count;
+  print(@write_bytes);
+  print(@write_time);
+  print(@write_count);
 
-  $snapshot_un_read_bytes = @un_read_bytes;
-  $snapshot_un_read_time = @un_read_time;
-  $snapshot_un_read_count = @un_read_count;
+  print(@un_read_bytes);
+  print(@un_read_time);
+  print(@un_read_count);
 
-  $snapshot_read_bytes = @read_bytes;
-  $snapshot_read_time = @read_time;
-  $snapshot_read_count = @read_count;
-
-  // print the snapshot data
-  print($snapshot_un_write_bytes);
-  print($snapshot_un_write_time);
-  print($snapshot_un_write_count);
-
-  print($snapshot_write_bytes);
-  print($snapshot_write_time);
-  print($snapshot_write_count);
-
-  print($snapshot_un_read_bytes);
-  print($snapshot_un_read_time);
-  print($snapshot_un_read_count);
-
-  print($snapshot_read_bytes);
-  print($snapshot_read_time);
-  print($snapshot_read_count);
+  print(@read_bytes);
+  print(@read_time);
+  print(@read_count);
 
   printf("---- rotated ----\n");
 }

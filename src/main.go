@@ -21,7 +21,7 @@ func main() {
 
 	// create jobs as input channel, results as output channel, and cache for rlink caching
 	jobs := make(chan string, 100)
-	results := make(chan worker.Packed, 100)
+	results := make(chan string, 100)
 	cache := &sync.Map{}
 
 	// wait group for workers
@@ -65,7 +65,7 @@ func main() {
 
 	// collect and print results
 	for res := range results {
-		fmt.Printf("> %s\n< %s\n", res.In, res.Out)
+		fmt.Println(res)
 	}
 
 	// wait for the command
