@@ -103,14 +103,14 @@ echo "igniting tracer"
 # call the tracer by cgroup
 if [ -n "$command" ]; then
     if $debug; then
-        sudo bpftrace bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}"
+        sudo bpftrace bpftrace/cgroups/debug/cgroup_comm_trace.bt "${cgroupid}" "${command}"
     else
-        ./filter.sh sudo bpftrace bpftrace/cgroups/minimal/cgroup_comm_trace.bt "${cgroupid}" "${command}"
+        sudo bpftrace bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}"
     fi
 else
     if $debug; then
-        sudo bpftrace bpftrace/cgroups/cgroup_trace.bt "${cgroupid}"
+        sudo bpftrace bpftrace/cgroups/debug/cgroup_trace.bt "${cgroupid}"
     else
-        ./filter.sh sudo bpftrace bpftrace/cgroups/minimal/cgroup_trace.bt "${cgroupid}"
+        sudo bpftrace bpftrace/cgroups/cgroup_trace.bt "${cgroupid}"
     fi
 fi
