@@ -65,7 +65,7 @@ while [ $# -gt 0 ]; do
 done
 
 # validate required flags
-if [ -z "$container_name" || -z "$pod_name" || -z "$namespace" ]; then
+if [ -z "$container_name" ] || [ -z "$pod_name" ] || [ -z "$namespace" ];; then
   echo "Error: --container, --pod, and --namespace are required."
   print_usage
   exit 1
