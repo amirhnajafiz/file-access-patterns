@@ -199,27 +199,3 @@ tracepoint:syscalls:sys_exit_close
   delete(@close_fd[tid]);
   delete(@fname[pid, $fd]);
 }
-
-/* 1 minute interval to print stats */
-interval:s:60
-{
-  print("---- rotating ----\n");
-
-  print(@un_write_bytes);
-  print(@un_write_time);
-  print(@un_write_count);
-
-  print(@write_bytes);
-  print(@write_time);
-  print(@write_count);
-
-  print(@un_read_bytes);
-  print(@un_read_time);
-  print(@un_read_count);
-
-  print(@read_bytes);
-  print(@read_time);
-  print(@read_count);
-
-  printf("---- rotated ----\n");
-}
