@@ -14,7 +14,7 @@ fi
 # run the command and read output line by line
 "$@" | while IFS= read -r line; do
   # process only lines that start with @
-  [[ "$line" != @* ]] && continue
+  [ "$line" != @* ] && continue
 
   # case 1: @operation[file]: value
   if [[ "$line" =~ ^@([a-zA-Z0-9_]+)\[([^\],]+)\]:[[:space:]]*(.*)$ ]]; then

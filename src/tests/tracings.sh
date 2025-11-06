@@ -1,0 +1,27 @@
+#!/usr/bin/env sh
+# file: tests/tracings.sh
+
+set -eu
+
+directory="bpftrace/tracings"
+
+# test `tracings` scripts
+sudo bpftrace -dd "${directory}/comm_trace.bt" tmp
+exit_status=$?
+if [ "$exit_status" -ne 0 ]; then
+    echo "comm_trace.bt failed"
+fi
+
+sudo bpftrace -dd -c "ls" "${directory}/cmd_trace.bt"
+exit_status=$?
+if [ "$exit_status" -ne 0 ]; then
+    echo "cmd_trace.bt failed"
+fi
+
+sudo bpftrace -dd "${directory}/pid_trace.bt" 1
+exit_status=$?
+if [ "$exit_status" -ne 0 ]; then
+    echo "pid_trace.bt failed"
+fi
+
+echo "passed all tests."
