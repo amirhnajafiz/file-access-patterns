@@ -24,7 +24,7 @@ tracepoint:syscalls:sys_exit_open
   $fname = @open_fname[tid];
 
   if (args->ret >= 0) {
-    @fname[pid, args->ret] = str($fname);
+    @fname[pid, args->ret] = $fname;
     // counting the overall bytes used in this file
     @read_bytes[$fname] = sum(0);
     @write_bytes[$fname] = sum(0);
@@ -38,6 +38,7 @@ tracepoint:syscalls:sys_exit_open
     @write_count[$fname] = count();
   }
 
+  print("");
   delete(@open_fname[tid]);
 }
 
@@ -68,6 +69,7 @@ tracepoint:syscalls:sys_exit_openat
     @write_count[$fname] = count();
   }
 
+  print("");
   delete(@open_fname[tid]);
 }
 
