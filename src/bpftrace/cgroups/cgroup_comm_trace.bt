@@ -21,7 +21,7 @@ tracepoint:syscalls:sys_enter_open
 tracepoint:syscalls:sys_exit_open
 / cgroup == @tracked_cgid && comm == @tracked_comm /
 {
-  $fname = str(@open_fname[tid]);
+  $fname = @open_fname[tid];
 
   if (args->ret >= 0) {
     @fname[pid, args->ret] = $fname;
@@ -51,7 +51,7 @@ tracepoint:syscalls:sys_enter_openat
 tracepoint:syscalls:sys_exit_openat
 / cgroup == @tracked_cgid && comm == @tracked_comm /
 {
-  $fname = str(@open_fname[tid]);
+  $fname = @open_fname[tid];
 
   if (args->ret >= 0) {
     @fname[pid, args->ret] = $fname;
