@@ -10,4 +10,3 @@ docker build -t file-access-patterns:test -f build/Dockerfile .
 
 # user must be root since the tracing program runs privileged syscalls
 docker run --user root --rm file-access-patterns:test /usr/local/app/trace.sh -h
-

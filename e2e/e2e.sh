@@ -36,4 +36,3 @@ cat "$SCRIPT_DIR/logs/trace_ls.txt"
 
 # remove the logs directory after the test
 rm -rf "$SCRIPT_DIR/logs"
-

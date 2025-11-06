@@ -12,4 +12,3 @@ docker rm -f $(docker ps -a --filter "ancestor=file-access-patterns:test" --form
 docker rmi -f file-access-patterns:test || true
 
 echo "Cleanup over."
-
