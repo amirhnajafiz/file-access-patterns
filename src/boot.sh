@@ -2,18 +2,73 @@
 # file: boot.sh
 
 # Usage:
-#   ./boot.sh <CONTAINER> <POD> <NAMESPACE>
+#   ./boot.sh --container <CONTAINER> --pod <POD> --namespace <NAMESPACE> [--command <COMMAND>] [--debug]
 
 set -eu
 
-# input: (container, pod (name/id), namespace, command)
-container_name="$1"
-pod_name="$2"
-namespace="$3"
+print_usage() {
+  cat <<EOF
+Usage:
+  $0 --container <CONTAINER> --pod <POD> --namespace <NAMESPACE> [--command <COMMAND>] [--debug]
 
+Required flags:
+  --container   Container name or ID
+  --pod         Pod name or ID
+  --namespace   Kubernetes namespace
+
+Optional flags:
+  --command     Command to execute inside the container
+  --debug       Enable debug output
+EOF
+}
+
+# default values
+container_name=""
+pod_name=""
+namespace=""
 command=""
-if [ "$#" -ge 4 ]; then
-    command="$4"
+debug=false
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --container)
+      container_name="$2"
+      shift 2
+      ;;
+    --pod)
+      pod_name="$2"
+      shift 2
+      ;;
+    --namespace)
+      namespace="$2"
+      shift 2
+      ;;
+    --command)
+      command="$2"
+      shift 2
+      ;;
+    --debug)
+      debug=true
+      shift
+      ;;
+    -h|--help)
+      print_usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1"
+      print_usage
+      exit 1
+      ;;
+  esac
+done
+
+# validate required flags
+if [[ -z "$container_name" || -z "$pod_name" || -z "$namespace" ]]; then
+  echo "Error: --container, --pod, and --namespace are required."
+  print_usage
+  exit 1
 fi
 
 if [ -n "$command" ]; then
@@ -47,7 +102,15 @@ echo "igniting tracer"
 
 # call the tracer by cgroup
 if [ -n "$command" ]; then
-    sudo bpftrace bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}"
+    if $debug; then
+        sudo bpftrace bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}"
+    else
+        sudo bpftrace bpftrace/cgroups/minimal/cgroup_comm_trace.bt "${cgroupid}" "${command}"
+    fi
 else
-    sudo bpftrace bpftrace/cgroups/cgroup_trace.bt "${cgroupid}"
+    if $debug; then
+        sudo bpftrace bpftrace/cgroups/cgroup_trace.bt "${cgroupid}"
+    else
+        sudo bpftrace bpftrace/cgroups/minimal/cgroup_trace.bt "${cgroupid}"
+    fi
 fi
