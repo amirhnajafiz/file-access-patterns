@@ -2,9 +2,9 @@
 # file: tests/test_cgroups.sh
 
 ./filter.sh cat <<'EOF'
-normal line
-@read[123, 4]: 987
-@operation[/tmp/foo.txt]: something
-@weird[abc,def]: nope
-@badline []
+noise line
+@un_read[123, 4]: 987
+@read[file]: 987
+@write[fileB]: 10
+@un_write[111, 2]: 1
 EOF

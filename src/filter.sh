@@ -13,36 +13,46 @@ fi
 # run the command and read output line by line without spawning a subshell
 # (requires bash for process substitution)
 while IFS= read -r line || [ -n "$line" ]; do
-  # process only lines that start with '@'
   case "$line" in
-    @*) ;;   # ok, continue processing
+    @*) ;;   # only process lines starting with '@'
     *) continue ;;
   esac
 
-  # CASE A: @op[pid, fd]: value   (numeric pid,fd)  -> resolve filename via rlink.sh
-  if [[ "$line" =~ ^@([a-zA-Z0-9_]+)\[([0-9]+),[[:space:]]*([0-9]+)\]:[[:space:]]*(.*)$ ]]; then
+  # extract operation name at minimum to decide
+  if [[ "$line" =~ ^@([a-zA-Z0-9_]+)\[ ]]; then
     op="${BASH_REMATCH[1]}"
-    pid="${BASH_REMATCH[2]}"
-    fd="${BASH_REMATCH[3]}"
-    value="${BASH_REMATCH[4]}"
-
-    # call rlink.sh to resolve pid+fd => filename; fallback to "unknown" on error
-    # remove `sudo` here if you prefer calling script without prompting for password
-    file="$(sudo ./rlink.sh "$pid" "$fd" 2>/dev/null || echo "unknown")"
-
-    printf '@%s[%s]: %s\n' "$op" "$file" "$value"
+  else
+    # no recognizable pattern — skip
     continue
   fi
 
-  # CASE B: @op[file]: value   (generic file-name or other bracket content)
-  if [[ "$line" =~ ^@([a-zA-Z0-9_]+)\[([^\]]+)\]:[[:space:]]*(.*)$ ]]; then
-    op="${BASH_REMATCH[1]}"
-    file="${BASH_REMATCH[2]}"
-    value="${BASH_REMATCH[3]}"
-    printf '@%s[%s]: %s\n' "$op" "$file" "$value"
-    continue
+  # if op starts with "un" => resolve pid,fd => filename
+  if [[ "$op" == un* ]]; then
+    # match CASE A format: @op[pid, fd]: value
+    if [[ "$line" =~ ^@([a-zA-Z0-9_]+)\[([0-9]+),[[:space:]]*([0-9]+)\]:[[:space:]]*(.*)$ ]]; then
+      pid="${BASH_REMATCH[2]}"
+      fd="${BASH_REMATCH[3]}"
+      value="${BASH_REMATCH[4]}"
+      # get filename via rlink.sh
+      file="$(sudo ./rlink.sh "$pid" "$fd" 2>/dev/null || echo "$pid::$fd")"
+      # remove "un_" prefix before printing
+      op_no_un="${op#un_}"
+      printf '@%s[%s]: %s\n' "$op_no_un" "$file" "$value"
+      continue
+    else
+      # unmatched, optional: print or skip
+      continue
+    fi
+  else
+    # op not starting with "un", just print line (could directly print or verify CASE B)
+    if [[ "$line" =~ ^@([a-zA-Z0-9_]+)\[([^\]]+)\]:[[:space:]]*(.*)$ ]]; then
+      file="${BASH_REMATCH[2]}"
+      value="${BASH_REMATCH[3]}"
+      printf '@%s[%s]: %s\n' "$op" "$file" "$value"
+      continue
+    else
+      # fallback: raw print line or ignore
+      echo "$line"
+    fi
   fi
-
-  # If it started with @ but didn't match patterns, optionally print or ignore:
-  # echo "unrecognized: $line" >&2
 done < <("$@")
