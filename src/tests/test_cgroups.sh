@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# file: tests/cgroups.sh
+# file: tests/test_cgroups.sh
 
 set -eu
 

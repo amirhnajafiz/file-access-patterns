@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# file: tests/tracings.sh
+# file: tests/test_tracings.sh
 
 set -eu
 
