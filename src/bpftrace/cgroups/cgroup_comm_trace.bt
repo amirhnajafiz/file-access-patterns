@@ -24,7 +24,7 @@ tracepoint:syscalls:sys_exit_open
   $fname = @open_fname[tid];
 
   if (args->ret >= 0) {
-    @fname[pid, args->ret] = $fname;
+    @fname[pid, args->ret] = str($fname);
     // counting the overall bytes used in this file
     @read_bytes[$fname] = sum(0);
     @write_bytes[$fname] = sum(0);
@@ -89,7 +89,7 @@ tracepoint:syscalls:sys_exit_dup
     @fname[pid, args->ret] = $fname;
   }
 
-  //delete(@fname[pid, $fd]);
+  delete(@fname[pid, $fd]);
   delete(@dup_fd[tid]);
 }
 
@@ -111,7 +111,7 @@ tracepoint:syscalls:sys_exit_dup2
     @fname[pid, args->ret] = $fname;
   }
 
-  //delete(@fname[pid, $fd]);
+  delete(@fname[pid, $fd]);
   delete(@dup_fd[tid]);
 }
 
@@ -198,5 +198,5 @@ tracepoint:syscalls:sys_exit_close
   $fname = @fname[pid, $fd];
 
   delete(@close_fd[tid]);
-  //delete(@fname[pid, $fd]);
+  delete(@fname[pid, $fd]);
 }
