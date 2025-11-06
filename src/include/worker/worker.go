@@ -11,8 +11,13 @@ import (
 	"github.com/amirhnajafiz/file-access-patterns/src/include/utils"
 )
 
+type Packed struct {
+	In  string
+	Out string
+}
+
 // Worker starts a process that gets the input lines as jobs and processes them based on its cases.
-func Worker(jobs <-chan string, results chan<- string, cache *sync.Map, wg *sync.WaitGroup) {
+func Worker(jobs <-chan string, results chan<- Packed, cache *sync.Map, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	// filter @ lines
@@ -23,9 +28,9 @@ func Worker(jobs <-chan string, results chan<- string, cache *sync.Map, wg *sync
 
 	// listern on the input channel for incomming lines from the main go-routine
 	for line := range jobs {
-		fmt.Println(line)
+		p := Packed{In: line, Out: line}
 		if !strings.HasPrefix(line, "@") {
-			results <- line
+			results <- p
 			continue
 		}
 
@@ -41,7 +46,7 @@ func Worker(jobs <-chan string, results chan<- string, cache *sync.Map, wg *sync
 		if strings.HasPrefix(op, "un") {
 			m := unRegex.FindStringSubmatch(line)
 			if m == nil {
-				results <- line
+				results <- p
 				continue
 			}
 
@@ -52,10 +57,11 @@ func Worker(jobs <-chan string, results chan<- string, cache *sync.Map, wg *sync
 			// get the filename by running the utils/rlink
 			file := utils.RLink(pid, fd, cache)
 
-			results <- fmt.Sprintf("@%s[%s]: %s", strings.TrimPrefix(op, "un_"), file, value)
+			p.Out = fmt.Sprintf("@%s[%s]: %s", strings.TrimPrefix(op, "un_"), file, value)
+			results <- p
 		} else {
 			// fallback print raw line
-			results <- line
+			results <- p
 		}
 	}
 }
