@@ -2,14 +2,14 @@
 # file: boot.sh
 
 # Usage:
-#   ./boot.sh --container <CONTAINER> --pod <POD> --namespace <NAMESPACE> [--command <COMMAND>] [--debug]
+#   ./boot.sh --container <CONTAINER> --pod <POD> --namespace <NAMESPACE> [--command <COMMAND>]
 
 set -eu
 
 print_usage() {
   cat <<EOF
 Usage:
-  $0 --container <CONTAINER> --pod <POD> --namespace <NAMESPACE> [--command <COMMAND>] [--debug]
+  $0 --container <CONTAINER> --pod <POD> --namespace <NAMESPACE> [--command <COMMAND>]
 
 Required flags:
   --container   Container name or ID
@@ -18,7 +18,6 @@ Required flags:
 
 Optional flags:
   --command     Command to execute inside the container
-  --debug       Enable debug output
 EOF
 }
 
@@ -27,7 +26,6 @@ container_name=""
 pod_name=""
 namespace=""
 command=""
-debug=false
 
 # Parse arguments
 while [ $# -gt 0 ]; do
@@ -47,10 +45,6 @@ while [ $# -gt 0 ]; do
     --command)
       command="$2"
       shift 2
-      ;;
-    --debug)
-      debug=true
-      shift
       ;;
     -h|--help)
       print_usage
@@ -102,15 +96,7 @@ echo "igniting tracer"
 
 # call the tracer by cgroup
 if [ -n "$command" ]; then
-    if $debug; then
-        sudo bpftrace bpftrace/cgroups/debug/cgroup_comm_trace.bt "${cgroupid}" "${command}"
-    else
-        sudo bpftrace bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}"
-    fi
+    sudo bpftrace bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}"
 else
-    if $debug; then
-        sudo bpftrace bpftrace/cgroups/debug/cgroup_trace.bt "${cgroupid}"
-    else
-        sudo bpftrace bpftrace/cgroups/cgroup_trace.bt "${cgroupid}"
-    fi
+    sudo bpftrace bpftrace/cgroups/cgroup_trace.bt "${cgroupid}"
 fi
