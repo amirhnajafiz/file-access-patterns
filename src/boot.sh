@@ -105,12 +105,12 @@ if [ -n "$command" ]; then
     if $debug; then
         sudo bpftrace bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}"
     else
-        sudo bpftrace bpftrace/cgroups/minimal/cgroup_comm_trace.bt "${cgroupid}" "${command}"
+        ./utils filter.sh sudo bpftrace bpftrace/cgroups/minimal/cgroup_comm_trace.bt "${cgroupid}" "${command}"
     fi
 else
     if $debug; then
         sudo bpftrace bpftrace/cgroups/cgroup_trace.bt "${cgroupid}"
     else
-        sudo bpftrace bpftrace/cgroups/minimal/cgroup_trace.bt "${cgroupid}"
+        ./utils filter.sh sudo bpftrace bpftrace/cgroups/minimal/cgroup_trace.bt "${cgroupid}"
     fi
 fi

@@ -33,7 +33,7 @@ fi
     value="${BASH_REMATCH[4]}"
 
     # call rlink.sh to resolve pid+fd => filename
-    file="$(sudo ./rlink.sh "$pid" "$fd" 2>/dev/null || echo "unknown")"
+    file="$(sudo ./utils/rlink.sh "$pid" "$fd" 2>/dev/null || echo "unknown")"
 
     echo "@${op}[${file}]: ${value}"
     continue
