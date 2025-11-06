@@ -23,6 +23,7 @@ func Worker(jobs <-chan string, results chan<- string, cache *sync.Map, wg *sync
 
 	// listern on the input channel for incomming lines from the main go-routine
 	for line := range jobs {
+		fmt.Println(line)
 		if !strings.HasPrefix(line, "@") {
 			results <- line
 			continue

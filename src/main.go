@@ -29,9 +29,10 @@ func main() {
 	numWorkers := 10
 
 	// start the workers
-	for i := 0; i < numWorkers; i++ {
+	for range numWorkers {
 		wg.Add(1)
 		go worker.Worker(jobs, results, cache, &wg)
+		fmt.Println("worker started!")
 	}
 
 	// run the command
