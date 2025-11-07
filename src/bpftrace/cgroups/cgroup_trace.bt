@@ -62,11 +62,11 @@ tracepoint:syscalls:sys_exit_open
 tracepoint:syscalls:sys_enter_openat
 / cgroup == @tracked_cgid /
 {
-if (@debug == 1) {
+  if (@debug == 1) {
     printf("[%s] %d %s ENTER openat dfd=%d fname=%s flags=0x%x mode=0%o [CGID %llu]\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs),
       pid, comm, args->dfd, str(args->filename), args->flags, args->mode, cgroup);
-    }
+  }
 
   @open_fname[tid] = args->filename;
 }
@@ -290,8 +290,8 @@ tracepoint:syscalls:sys_exit_close
   delete(@fname[pid, $fd]);
 }
 
-/* every 30 secunds print the maps */
-interval:s:30
+/* every 60 secunds print the maps */
+interval:s:60
 {
   // only when not in debugging mode
   if (@debug == 0) {
