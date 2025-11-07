@@ -2,7 +2,7 @@
 # file: boot.sh
 
 # Usage:
-#   ./boot.sh --container <CONTAINER> --pod <POD> --namespace <NAMESPACE> [--command <COMMAND>]
+#   ./boot.sh --container <CONTAINER> --pod <POD> --namespace <NAMESPACE> [--command <COMMAND>] [--debug]
 
 set -eu
 
@@ -18,6 +18,7 @@ Required flags:
 
 Optional flags:
   --command     Command to execute inside the container
+  --debug       Display debug lines in bpftrace program
 EOF
 }
 
@@ -26,6 +27,7 @@ container_name=""
 pod_name=""
 namespace=""
 command=""
+debug=0
 
 # Parse arguments
 while [ $# -gt 0 ]; do
@@ -44,6 +46,10 @@ while [ $# -gt 0 ]; do
       ;;
     --command)
       command="$2"
+      shift 2
+      ;;
+    --debug)
+      debug=1
       shift 2
       ;;
     -h|--help)
@@ -96,7 +102,7 @@ echo "igniting tracer"
 
 # call the tracer by cgroup
 if [ -n "$command" ]; then
-    sudo bpftrace bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}"
+    sudo bpftrace bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}" "${debug}
 else
-    sudo bpftrace bpftrace/cgroups/cgroup_trace.bt "${cgroupid}"
+    sudo bpftrace bpftrace/cgroups/cgroup_trace.bt "${cgroupid}" "${debug}"
 fi

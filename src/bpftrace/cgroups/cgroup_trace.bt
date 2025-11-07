@@ -1,14 +1,19 @@
 #!/usr/bin/env bpftrace
 // file: src/bpftrace/cgroups/debug/cgroup_trace.bt
-// usage: sudo bpftrace -o /tmp/tracing.out cgroup_trace.bt <CGROUP_ID>
+// usage: sudo bpftrace -o /tmp/tracing.out cgroup_trace.bt <CGROUP_ID> <DEBUG>
 
 BEGIN
 {
   @tracked_cgid = (uint64)$1;
-  @debug = 0;
+  @debug = (int)$2;
 
   printf("[%s] START tracing file-access events for CGROUP ID %llu\n",
     strftime("%Y-%m-%d %H:%M:%S", nsecs), $1);
+  if (@debug == 0) {
+    print("debug disabled");
+  } else {
+    print("debug enabled");
+  }
 }
 
 /* open enter + exit */
@@ -288,16 +293,19 @@ tracepoint:syscalls:sys_exit_close
 /* every 30 secunds print the maps */
 interval:s:30
 {
-  printf("--- roatating ---\n");
+  // only when not in debugging mode
+  if (@debug == 0) {
+    printf("--- roatating ---\n");
 
-  print(@read_bytes);
-  print(@write_bytes);
+    print(@read_bytes);
+    print(@write_bytes);
 
-  print(@read_time);
-  print(@write_time);
+    print(@read_time);
+    print(@write_time);
 
-  print(@read_count);
-  print(@write_count);
+    print(@read_count);
+    print(@write_count);
 
-  printf("--- roatated ---\n");
+    printf("--- roatated ---\n");
+  }
 }
