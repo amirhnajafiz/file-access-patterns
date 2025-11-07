@@ -50,7 +50,7 @@ while [ $# -gt 0 ]; do
       ;;
     --debug)
       debug=1
-      shift 2
+      shift 1
       ;;
     -h|--help)
       print_usage
