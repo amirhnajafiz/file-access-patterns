@@ -284,3 +284,20 @@ tracepoint:syscalls:sys_exit_close
   delete(@close_fd[tid]);
   delete(@fname[pid, $fd]);
 }
+
+/* every 30 secunds print the maps */
+interval:s:30
+{
+  printf("--- roatating ---\n");
+
+  print(@read_bytes);
+  print(@write_bytes);
+
+  print(@read_time);
+  print(@write_time);
+
+  print(@read_count);
+  print(@write_count);
+
+  printf("--- roatated ---\n");
+}
