@@ -6,6 +6,8 @@ services:
     build:
       context: .
       dockerfile: build/Dockerfile
+    volumes:
+      - /sys:/sys:rw
     ulimits:
       memlock:
         soft: -1
