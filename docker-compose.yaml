@@ -6,6 +6,10 @@ services:
     build:
       context: .
       dockerfile: build/Dockerfile
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
     entrypoint: ["/usr/local/app/entrypoint/units.sh"]
 
   # trace help only builds the image and runs the help command
