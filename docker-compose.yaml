@@ -1,6 +1,13 @@
 version: '3.9'
 
 services:
+  # run unit tests to check the bpftrace images before release
+  unit-test:
+    build:
+      context: .
+      dockerfile: ../build/Dockerfile
+    entrypoint: ["/usr/local/app/entrypoint/utils.sh"]
+
   # trace help only builds the image and runs the help command
   # to ensure the docker pipeline works without any errors.
   trace-help:
