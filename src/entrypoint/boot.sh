@@ -2,7 +2,7 @@
 # file: entrypoint/boot.sh
 
 # Usage:
-#   ./boot.sh --container <CONTAINER> --pod <POD> --namespace <NAMESPACE> [--command <COMMAND>] [--debug]
+#   ./boot.sh --container <CONTAINER> --pod <POD> --namespace <NAMESPACE> [--command <COMMAND>] [--output <OUTPUT>] [--debug]
 
 set -eu
 
@@ -18,6 +18,7 @@ Required flags:
 
 Optional flags:
   --command     Command to execute inside the container
+  --output      File path to export the tracing logs (default is STDOUT)
   --debug       Display debug lines in bpftrace program
 EOF
 }
@@ -27,6 +28,7 @@ container_name=""
 pod_name=""
 namespace=""
 command=""
+output_path=""
 debug=0
 
 # Parse arguments
@@ -46,6 +48,10 @@ while [ $# -gt 0 ]; do
       ;;
     --command)
       command="$2"
+      shift 2
+      ;;
+    --output)
+      output_path="$2"
       shift 2
       ;;
     --debug)
@@ -83,7 +89,7 @@ while true; do
     containerid=$(sudo crictl ps --namespace "${namespace}" | awk -v pod="${pod_name}" -v cname="${container_name}" 'NR > 1 && $10 == pod && $7 == cname { print $1}')
 
     if [ -n "$containerid" ]; then
-        echo "target found: ${containerid}"
+        echo "target container found: ${container_name} => ${containerid}"
         break
     fi
 
@@ -102,7 +108,15 @@ echo "igniting tracer"
 
 # call the tracer by cgroup
 if [ -n "$command" ]; then
+  if [ -n "$output" ]; then
+    sudo bpftrace -o "${output_path}" bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}" "${debug}"
+  else
     sudo bpftrace bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}" "${debug}"
+  fi
 else
-    sudo bpftrace bpftrace/cgroups/cgroup_trace.bt "${cgroupid}" "${debug}"
+  if [ -n "$output" ]; then
+    sudo bpftrace -o "${output_path}" bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}" "${debug}"
+  else
+    sudo bpftrace bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}" "${debug}"
+  fi
 fi
