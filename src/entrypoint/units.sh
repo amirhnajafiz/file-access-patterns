@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 # file: entrypoint/units.sh
 
-sudo ./tests/test_cgroups.sh
-sudo ./tests/test_tracings.sh
-sudo ./tests/test_filter.sh
+./tests/test_cgroups.sh
+./tests/test_tracings.sh
+./tests/test_filter.sh
