@@ -86,7 +86,7 @@ fi
 # running: sudo crictl ps => output is containerid
 while true; do
     echo "waiting ..."
-    containerid=$(sudo crictl ps --namespace "${namespace}" | awk -v pod="${pod_name}" -v cname="${container_name}" 'NR > 1 && $10 == pod && $7 == cname { print $1}')
+    containerid=$(crictl ps --namespace "${namespace}" | awk -v pod="${pod_name}" -v cname="${container_name}" 'NR > 1 && $10 == pod && $7 == cname { print $1}')
 
     if [ -n "$containerid" ]; then
         echo "target container found: ${container_name} => ${containerid}"
@@ -98,7 +98,7 @@ done
 
 # input: containerid
 # running: sudo find /sys/fs/cgroup/ -type d -name "*${containerid}*" => output is cgroupid (full path)
-path=$(sudo find /sys/fs/cgroup/ -type d -name "*${containerid}*")
+path=$(find /sys/fs/cgroup/ -type d -name "*${containerid}*")
 
 # input: cgroup path
 # find numeric cgroupid for a container
@@ -109,14 +109,14 @@ echo "igniting tracer"
 # call the tracer by cgroup
 if [ -n "$command" ]; then
   if [ -n "$output" ]; then
-    sudo bpftrace -o "${output_path}" bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}" "${debug}"
+    bpftrace -o "${output_path}" bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}" "${debug}"
   else
-    sudo bpftrace bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}" "${debug}"
+    bpftrace bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}" "${debug}"
   fi
 else
   if [ -n "$output" ]; then
-    sudo bpftrace -o "${output_path}" bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}" "${debug}"
+    bpftrace -o "${output_path}" bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}" "${debug}"
   else
-    sudo bpftrace bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}" "${debug}"
+    bpftrace bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}" "${debug}"
   fi
 fi
