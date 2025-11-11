@@ -32,7 +32,7 @@ WORKDIR /usr/local/app
 COPY src/ .
 
 # Set executable permissions for the trace script
-RUN chmod +x /usr/local/app/entrypoint/trace.sh && chmod +x /usr/local/app/entrypoint/boot.sh
+RUN chmod +x /usr/local/app/entrypoint/trace.sh && chmod +x /usr/local/app/entrypoint/boot.sh && chmod +x /usr/local/app/entrypoint/units.sh
 
 # Default command
 CMD ["/bin/sh"]

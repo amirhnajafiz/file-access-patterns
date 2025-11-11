@@ -6,7 +6,7 @@ services:
     build:
       context: .
       dockerfile: build/Dockerfile
-    entrypoint: ["/usr/local/app/entrypoint/utils.sh"]
+    entrypoint: ["/usr/local/app/entrypoint/units.sh"]
 
   # trace help only builds the image and runs the help command
   # to ensure the docker pipeline works without any errors.
