@@ -29,7 +29,7 @@ docker run -it \
   -v /sys/kernel/debug:/sys/kernel/debug:rw \
   -v "$SCRIPT_DIR/logs":/logs:rw \
    file-access-patterns:test \
-  /usr/local/app/trace.sh -c "ls" -o /logs/trace_ls.txt
+  /usr/local/app/entrypoint/trace.sh -c "ls" -o /logs/trace_ls.txt
 
 # display the generated log file
 cat "$SCRIPT_DIR/logs/trace_ls.txt"

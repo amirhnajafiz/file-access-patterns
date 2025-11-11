@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# file: filter.sh
+# file: utils/filter.sh
 # Usage:
 #   ./filter.sh <command> [args...]
 

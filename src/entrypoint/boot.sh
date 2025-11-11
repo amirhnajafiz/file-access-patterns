@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# file: boot.sh
+# file: entrypoint/boot.sh
 
 # Usage:
 #   ./boot.sh --container <CONTAINER> --pod <POD> --namespace <NAMESPACE> [--command <COMMAND>] [--debug]

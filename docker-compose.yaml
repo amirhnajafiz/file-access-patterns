@@ -5,7 +5,7 @@ services:
   # to ensure the docker pipeline works without any errors.
   trace-help:
     image: ghcr.io/amirhnajafiz/flap:v0.0.0-beta-10
-    entrypoint: ["/usr/local/app/trace.sh"]
+    entrypoint: ["/usr/local/app/entrypoint/trace.sh"]
     command: ["-h"]
 
   # user end-to-end test runs a tracing operation to validate the
@@ -24,7 +24,7 @@ services:
     volumes:
       - /sys:/sys:rw
       - ./tests/logs:/logs:rw
-    entrypoint: ["/usr/local/app/trace.sh"]
+    entrypoint: ["/usr/local/app/entrypoint/trace.sh"]
     command: ["-c", "ls", "-o", "/logs/trace_ls.txt"]
 
 volumes:
