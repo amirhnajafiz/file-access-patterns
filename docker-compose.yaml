@@ -5,7 +5,7 @@ services:
   unit-test:
     build:
       context: .
-      dockerfile: ../build/Dockerfile
+      dockerfile: build/Dockerfile
     entrypoint: ["/usr/local/app/entrypoint/utils.sh"]
 
   # trace help only builds the image and runs the help command
