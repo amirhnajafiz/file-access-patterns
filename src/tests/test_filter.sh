@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # file: tests/test_cgroups.sh
 
-./filter.sh cat <<'EOF'
+./utils/filter.sh cat <<'EOF'
 noise line
 @fname[3448510, 8]: /proc/self/task/943521/ns/net
 @fname[3448555, 8]: /proc/self/task/943559/ns/net
