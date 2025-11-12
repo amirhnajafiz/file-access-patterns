@@ -1,6 +1,11 @@
 .git/
+.github/
+
 build/
+k8s/
 tests/
 
+.gitignore
+docker-compose.yaml
 Makefile
 README.md
