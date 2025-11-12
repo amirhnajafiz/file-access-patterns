@@ -42,25 +42,9 @@ func MutatePods(codecs serializer.CodecFactory) func(http.ResponseWriter, *http.
 				return
 			}
 
-			// cxtract pod details
-			annotations := pod.Annotations
-			nodeName := pod.Spec.NodeName // might be empty at creation time
-
-			fmt.Printf("Received Pod %s/%s, Node=%s, Annotations=%v\n",
-				pod.Namespace, pod.Name, nodeName, annotations)
-
-			// create the init container to inject
-			initContainer := corev1.Container{
-				Name:  "custom-init",
-				Image: "busybox:latest",
-				Command: []string{
-					"sh", "-c", "echo Custom init container running...",
-				},
-			}
-
-			// apply mutation
+			// apply mutation (keep before and after state)
 			original, _ := json.Marshal(pod)
-			pod.Spec.InitContainers = append(pod.Spec.InitContainers, initContainer)
+			pod = podCreationHandler(pod)
 			modified, _ := json.Marshal(pod)
 
 			patch, err := jsonmergepatch.CreateThreeWayJSONMergePatch(original, modified, original)
