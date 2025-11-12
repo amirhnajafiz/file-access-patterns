@@ -5,6 +5,7 @@ build/
 k8s/
 tests/
 
+.env
 .gitignore
 docker-compose.yaml
 Makefile

@@ -66,6 +66,7 @@ dkms.conf
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+.env
 
 # Python
 __pycache__/
