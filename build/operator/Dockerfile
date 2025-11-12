@@ -1,38 +1,23 @@
-# Use official Ubuntu 24.04 as base image
-FROM ubuntu:24.04
+# Use official go image
+FROM golang:1.25-alpine3.21 AS build
 
-ENV DEBIAN_FRONTEND=noninteractive
+COPY go.mod go.sum /usr/local/app
 
-# Install ebpf (bpftrace) dependencies
-RUN apt-get update && apt-get install -y \
-    bpftrace \
-    linux-tools-generic \
-    linux-tools-common \
-    linux-headers-generic \
-    libbpf-dev \
-    llvm \
-    clang \
-    iproute2 \
-    git \
-    ca-certificates \
-    make \
-    g++ \
-    kmod \
-    wget \
-    curl \
-    xz-utils \
-    procps \
-    strace \
-    && rm -rf /var/lib/apt/lists/*
+# download all dependencies. Dependencies will be cached if the go.mod and go.sum files are not changed
+RUN go mod download
 
-# Set the working directory
+COPY include /usr/local/app
+COPY pkg /usr/local/app
+COPY main.go /usr/local/app
+
 WORKDIR /usr/local/app
 
-# Copy the files into the working directory
-COPY src/ .
+# Build the go app
+RUN GO111MODULE=on CGO_ENABLED=0 go build -o flap ./main.go
 
-# Set executable permissions for the trace script
-RUN chmod +x /usr/local/app/entrypoint/trace.sh && chmod +x /usr/local/app/entrypoint/boot.sh && chmod +x /usr/local/app/entrypoint/units.sh
+# Minimal alpine image
+FROM alpine:3.21
 
-# Default command
-CMD ["/bin/sh"]
+COPY --from=build /usr/local/app/flap /usr/local/bin/flap
+
+ENTRYPOINT ["/usr/local/bin/flap"]
