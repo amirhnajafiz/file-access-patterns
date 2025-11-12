@@ -7,6 +7,7 @@ import (
 )
 
 // Config hold the operator tune parameters.
+// all configuration parameters must be set as environment variables or as a `.env` file.
 type Config struct {
 	LogLevel string `mapstructure:"FLAP_LOG_LEVEL"`
 	JSONLog  bool   `mapstructure:"FLAP_JSON_LOG"`
