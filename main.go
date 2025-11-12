@@ -5,7 +5,10 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/amirhnajafiz/flap/include/configs"
+	"github.com/amirhnajafiz/flap/include/telemetry/logging"
 	"github.com/amirhnajafiz/flap/include/webhooks"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -21,6 +24,17 @@ func init() {
 }
 
 func main() {
+	// read configs
+	cfg, err := configs.LoadConfigs()
+	if err != nil {
+		panic(
+			fmt.Sprintf("failed to load configs: %v", err),
+		)
+	}
+
+	// set logrus logging
+	logging.SetLogger(cfg.LogLevel, cfg.JSONLog)
+
 	http.HandleFunc("/mutate", webhooks.MutatePods(codecs))
 
 	addr := ":8443"
