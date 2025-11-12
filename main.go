@@ -6,6 +6,7 @@ import (
 
 	"github.com/amirhnajafiz/flap/include/cmd"
 	"github.com/amirhnajafiz/flap/include/configs"
+	"github.com/amirhnajafiz/flap/include/handlers"
 	"github.com/amirhnajafiz/flap/include/telemetry/logging"
 	"github.com/amirhnajafiz/flap/include/webhooks"
 
@@ -35,6 +36,8 @@ func main() {
 	// set logrus logging
 	logging.SetLogger(cfg.LogLevel, cfg.JSONLog)
 
+	// register http handlers
+	http.HandleFunc("/health", handlers.ServeHealth)
 	http.HandleFunc("/mutate", webhooks.MutatePods(codecs))
 
 	// listens to clear text http unless TLS env var is set to "true"
