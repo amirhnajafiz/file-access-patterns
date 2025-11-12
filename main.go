@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
+	"github.com/amirhnajafiz/flap/include/cmd"
 	"github.com/amirhnajafiz/flap/include/configs"
 	"github.com/amirhnajafiz/flap/include/telemetry/logging"
 	"github.com/amirhnajafiz/flap/include/webhooks"
@@ -37,11 +37,10 @@ func main() {
 
 	http.HandleFunc("/mutate", webhooks.MutatePods(codecs))
 
-	addr := ":8443"
-	fmt.Printf("Starting webhook server on %s...\n", addr)
-
-	// Normally you serve with TLS, but for local dev we can skip
-	if err := http.ListenAndServeTLS(addr, "/tls/tls.crt", "/tls/tls.key", nil); err != nil {
-		log.Fatalf("server failed: %v", err)
+	// listens to clear text http unless TLS env var is set to "true"
+	if cfg.TLS {
+		cmd.ServeHTTPS()
+	} else {
+		cmd.ServeHTTP()
 	}
 }

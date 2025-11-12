@@ -10,6 +10,7 @@ import (
 type Config struct {
 	LogLevel string `mapstructure:"FLAP_LOG_LEVEL"`
 	JSONLog  bool   `mapstructure:"FLAP_JSON_LOG"`
+	TLS      bool   `mapstructure:"FLAP_TLS"`
 }
 
 // LoadConfigs reads the env variables into a Config struct.
