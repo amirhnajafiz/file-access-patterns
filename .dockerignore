@@ -10,3 +10,5 @@ tests/
 docker-compose.yaml
 Makefile
 README.md
+main
+main~

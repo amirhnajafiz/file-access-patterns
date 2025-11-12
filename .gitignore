@@ -70,3 +70,7 @@ Desktop.ini
 
 # Python
 __pycache__/
+
+# Exec file
+main
+main~

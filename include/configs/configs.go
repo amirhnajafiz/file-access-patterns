@@ -6,19 +6,14 @@ import (
 	"github.com/spf13/viper"
 )
 
-const (
-	envPrefix = "FLAP_"
-)
-
 // Config hold the operator tune parameters.
 type Config struct {
-	LogLevel string `mapstructure:"LOG_LEVEL"`
-	JSONLog  bool   `mapstructure:"JSON_LOG"`
+	LogLevel string `mapstructure:"FLAP_LOG_LEVEL"`
+	JSONLog  bool   `mapstructure:"FLAP_JSON_LOG"`
 }
 
 // LoadConfigs reads the env variables into a Config struct.
 func LoadConfigs() (*Config, error) {
-	viper.SetEnvPrefix(envPrefix)
 	viper.SetConfigFile(".env")
 	_ = viper.ReadInConfig() // ignore if .env missing
 
