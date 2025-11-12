@@ -19,6 +19,9 @@ type Config struct {
 // LoadConfigs reads the env variables into a Config struct.
 func LoadConfigs() (*Config, error) {
 	viper.SetEnvPrefix(envPrefix)
+	viper.SetConfigFile(".env")
+	_ = viper.ReadInConfig() // ignore if .env missing
+
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
