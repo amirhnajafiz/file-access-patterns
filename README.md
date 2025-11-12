@@ -6,22 +6,11 @@
 
 eBPF based tool for tracing file access patterns. This project is under development, so please don't use it in any critical environment.
 
-## Testing
-
-Make sure to have `docker` installed on your system and run `make test` to run image build and end-to-end tests.
-
-## Beta Images
-
-The docker image is available (examples in `docker-compose.yaml`):
-
-```
-docker pull ghcr.io/amirhnajafiz/flap:v0.0.0-beta-2
-```
-
 ## Operator
 
-1. Webhook on pod creation
-2. Extract the host
-3. Signals the host daemon (pod uid, namespace, and container)
-4. Starts tracing
-5. Live exports the results
+1. Webhook on pod creation/delete
+2. Extract the required information (node, ns, pod, container, command)
+3. Add an init container to wait on an specific directory on the host to finish
+4. Creates a pod in the namespace on the target node (pod uid, namespace, and container)
+5. Starts tracing
+6. Terminate upon pod removal
