@@ -19,14 +19,6 @@ func (m Mutator) PreStartPatchMutate() ([]byte, error) {
 	logger.Debug("received pod")
 
 	// create and start a new tracer
-	if err := startNewTracer(
-		pod.Spec.NodeName,
-		pod.Name,
-		pod.Namespace,
-		pod.Annotations,
-	); err != nil {
-		return nil, fmt.Errorf("failed to start a new tracer: %v", err)
-	}
 
 	// create the init container to inject
 	initContainer := templates.NewInitContainer("")
@@ -39,13 +31,4 @@ func (m Mutator) PreStartPatchMutate() ([]byte, error) {
 	}
 
 	return patch, nil
-}
-
-func startNewTracer(
-	nodeName,
-	podName,
-	namespace string,
-	annotations map[string]string,
-) error {
-	return nil
 }
