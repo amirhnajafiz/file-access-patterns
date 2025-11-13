@@ -4,31 +4,48 @@ import (
 	"encoding/json"
 	"fmt"
 
-	corev1 "k8s.io/api/core/v1"
+	"github.com/amirhnajafiz/flap/pkg/templates"
 )
 
+// PreStartPatchMutate takes a pod, creates a new tracer instance, and adds
+// the init container to the target pod.
 func (m Mutator) PreStartPatchMutate() ([]byte, error) {
+	logger := m.Logger.WithField("mutator", "pre start patch")
 	pod := m.Pod
 
-	// cxtract pod details
-	annotations := pod.Annotations
-	nodeName := pod.Spec.NodeName // might be empty at creation time
+	logger.WithField("node", pod.Spec.NodeName)
+	logger.WithField("pod", pod.Name)
+	logger.WithField("namespace", pod.Namespace)
+	logger.Debug("received pod")
 
-	fmt.Printf("Received Pod %s/%s, Node=%s, Annotations=%v\n",
-		pod.Namespace, pod.Name, nodeName, annotations)
-
-	// create the init container to inject
-	initContainer := corev1.Container{
-		Name:  "custom-init",
-		Image: "busybox:latest",
-		Command: []string{
-			"sh", "-c", "echo Custom init container running...",
-		},
+	// create and start a new tracer
+	if err := startNewTracer(
+		pod.Spec.NodeName,
+		pod.Name,
+		pod.Namespace,
+		pod.Annotations,
+	); err != nil {
+		return nil, fmt.Errorf("failed to start a new tracer: %v", err)
 	}
 
-	pod.Spec.InitContainers = append(pod.Spec.InitContainers, initContainer)
+	// create the init container to inject
+	initContainer := templates.NewInitContainer("")
+	pod.Spec.InitContainers = append(pod.Spec.InitContainers, *initContainer)
 
-	patch, _ := json.Marshal(pod)
+	// encode the patch
+	patch, err := json.Marshal(pod)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode path: %v", err)
+	}
 
 	return patch, nil
+}
+
+func startNewTracer(
+	nodeName,
+	podName,
+	namespace string,
+	annotations map[string]string,
+) error {
+	return nil
 }
