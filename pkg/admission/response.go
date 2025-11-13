@@ -25,7 +25,7 @@ func ReviewResponse(uid types.UID, allowed bool, httpCode int32, reason string) 
 }
 
 // PatchReviewResponse builds an admission review with given json patch.
-func PatchReviewResponse(uid types.UID, patch []byte) (*admissionv1.AdmissionReview, error) {
+func PatchReviewResponse(uid types.UID, patch []byte) *admissionv1.AdmissionReview {
 	patchType := admissionv1.PatchTypeJSONPatch
 
 	return &admissionv1.AdmissionReview{
@@ -39,5 +39,5 @@ func PatchReviewResponse(uid types.UID, patch []byte) (*admissionv1.AdmissionRev
 			PatchType: &patchType,
 			Patch:     patch,
 		},
-	}, nil
+	}
 }

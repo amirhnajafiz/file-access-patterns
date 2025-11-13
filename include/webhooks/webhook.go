@@ -6,19 +6,23 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/amirhnajafiz/flap/include/webhooks/middlewares"
+	"github.com/amirhnajafiz/flap/include/webhooks/mutators"
+	"github.com/amirhnajafiz/flap/pkg/admission"
 	"github.com/sirupsen/logrus"
 
 	admissionv1 "k8s.io/api/admission/v1"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/util/jsonmergepatch"
 )
 
 func MutatePods(codecs serializer.CodecFactory) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// init a new logger instance with request uri
 		logger := logrus.WithField("uri", r.RequestURI)
 		logger.Debug("received mutation request")
 
+		// extract the admission request
 		in, err := parseRequest(*r)
 		if err != nil {
 			logger.Error(err)
@@ -26,55 +30,56 @@ func MutatePods(codecs serializer.CodecFactory) func(http.ResponseWriter, *http.
 			return
 		}
 
-		var (
-			admissionReview   admissionv1.AdmissionReview
-			admissionResponse admissionv1.AdmissionResponse
-		)
-
-		req := in.Request
-		if req == nil {
+		// check the request length
+		if in.Request == nil {
 			http.Error(w, "empty request", http.StatusBadRequest)
 			return
 		}
 
-		if req.Kind.Kind != "Pod" {
-			admissionResponse = admissionv1.AdmissionResponse{
-				Allowed: true,
-			}
-		} else {
-			var pod corev1.Pod
-			deserializer := codecs.UniversalDeserializer()
-			if _, _, err := deserializer.Decode(req.Object.Raw, nil, &pod); err != nil {
-				http.Error(w, fmt.Sprintf("could not unmarshal pod: %v", err), http.StatusBadRequest)
-				return
-			}
-
-			// apply mutation (keep before and after state)
-			original, _ := json.Marshal(pod)
-			pod = podCreationHandler(pod)
-			modified, _ := json.Marshal(pod)
-
-			patch, err := jsonmergepatch.CreateThreeWayJSONMergePatch(original, modified, original)
-			if err != nil {
-				http.Error(w, fmt.Sprintf("failed to create patch: %v", err), http.StatusInternalServerError)
-				return
-			}
-
-			patchType := admissionv1.PatchTypeJSONPatch
-			admissionResponse = admissionv1.AdmissionResponse{
-				Allowed:   true,
-				Patch:     patch,
-				PatchType: &patchType,
-			}
+		// create a new admitter
+		adm := admission.Admitter{
+			Codecs:  codecs,
+			Logger:  logger,
+			Request: in.Request,
 		}
 
-		admissionReview.Response = &admissionResponse
-		admissionReview.Response.UID = admissionReview.Request.UID
+		// call reconcile to get the admission review
+		admissionReview := reconcile(&adm)
 
+		// return the admission review response
 		resp, _ := json.Marshal(admissionReview)
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(resp)
 	}
+}
+
+func reconcile(adm *admission.Admitter) *admissionv1.AdmissionReview {
+	// get the pod, if the resouorce is not a pod skip it
+	pod, err := adm.Pod()
+	if err != nil {
+		return admission.ReviewResponse(adm.Request.UID, true, http.StatusAccepted, err.Error())
+	}
+
+	// apply the middleware, if not annotated skip it
+	if ok := middlewares.FilterPodByAnnotation(pod); !ok {
+		return admission.ReviewResponse(adm.Request.UID, true, http.StatusAccepted, "OK")
+	}
+
+	// create a new mutator
+	mut := mutators.NewMutator(adm.Logger, pod)
+
+	// apply mutation (keep before and after state)
+	original, _ := json.Marshal(pod)
+	modified, _ := mut.PreStartPatchMutate()
+
+	// create a patch
+	patch, err := jsonmergepatch.CreateThreeWayJSONMergePatch(original, modified, original)
+	if err != nil {
+		adm.Logger.Error(err)
+		return admission.ReviewResponse(adm.Request.UID, false, http.StatusInternalServerError, err.Error())
+	}
+
+	return admission.PatchReviewResponse(adm.Request.UID, patch)
 }
 
 // parseRequest extracts an AdmissionReview from an http.Request if possible.

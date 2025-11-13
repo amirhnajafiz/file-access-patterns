@@ -1,16 +1,17 @@
 package admission
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
 	admissionv1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 )
 
 // Admitter is a container for admission logic.
 type Admitter struct {
+	Codecs  serializer.CodecFactory
 	Logger  *logrus.Entry
 	Request *admissionv1.AdmissionRequest
 }
@@ -22,8 +23,9 @@ func (a Admitter) Pod() (*corev1.Pod, error) {
 	}
 
 	p := corev1.Pod{}
-	if err := json.Unmarshal(a.Request.Object.Raw, &p); err != nil {
-		return nil, err
+	deserializer := a.Codecs.UniversalDeserializer()
+	if _, _, err := deserializer.Decode(a.Request.Object.Raw, nil, &p); err != nil {
+		return nil, fmt.Errorf("could not unmarshal pod: %v", err)
 	}
 
 	return &p, nil

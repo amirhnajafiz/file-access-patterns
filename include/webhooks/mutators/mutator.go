@@ -12,6 +12,6 @@ type Mutator struct {
 }
 
 // NewMutator returns an initialised instance of Mutator.
-func NewMutator(logger *logrus.Entry) *Mutator {
-	return &Mutator{Logger: logger}
+func NewMutator(l *logrus.Entry, p *corev1.Pod) *Mutator {
+	return &Mutator{Logger: l, Pod: p}
 }
