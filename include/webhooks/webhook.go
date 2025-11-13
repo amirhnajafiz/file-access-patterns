@@ -1,9 +1,12 @@
 package webhooks
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/sirupsen/logrus"
 
 	admissionv1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -13,18 +16,22 @@ import (
 
 func MutatePods(codecs serializer.CodecFactory) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		logger := logrus.WithField("uri", r.RequestURI)
+		logger.Debug("received mutation request")
+
+		in, err := parseRequest(*r)
+		if err != nil {
+			logger.Error(err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
 		var (
 			admissionReview   admissionv1.AdmissionReview
 			admissionResponse admissionv1.AdmissionResponse
 		)
 
-		// decode the request
-		if err := json.NewDecoder(r.Body).Decode(&admissionReview); err != nil {
-			http.Error(w, fmt.Sprintf("could not decode body: %v", err), http.StatusBadRequest)
-			return
-		}
-
-		req := admissionReview.Request
+		req := in.Request
 		if req == nil {
 			http.Error(w, "empty request", http.StatusBadRequest)
 			return
@@ -68,4 +75,32 @@ func MutatePods(codecs serializer.CodecFactory) func(http.ResponseWriter, *http.
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(resp)
 	}
+}
+
+// parseRequest extracts an AdmissionReview from an http.Request if possible.
+func parseRequest(r http.Request) (*admissionv1.AdmissionReview, error) {
+	if r.Header.Get("Content-Type") != "application/json" {
+		return nil, fmt.Errorf("Content-Type: %q should be %q",
+			r.Header.Get("Content-Type"), "application/json")
+	}
+
+	bodybuf := new(bytes.Buffer)
+	bodybuf.ReadFrom(r.Body)
+	body := bodybuf.Bytes()
+
+	if len(body) == 0 {
+		return nil, fmt.Errorf("admission request body is empty")
+	}
+
+	var a admissionv1.AdmissionReview
+
+	if err := json.Unmarshal(body, &a); err != nil {
+		return nil, fmt.Errorf("could not parse admission review request: %v", err)
+	}
+
+	if a.Request == nil {
+		return nil, fmt.Errorf("admission review can't be used: Request field is nil")
+	}
+
+	return &a, nil
 }
