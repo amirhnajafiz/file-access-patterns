@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: flap
+  name: flap
+  namespace: flap
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flap-operator
+  template:
+    metadata:
+      labels:
+        app: flap-operator
+    spec:
+      containers:
+        - image: ghcr.io/amirhnajafiz/flap-operator:latest
+          name: flap-operator-container
+          env:
+            - name: FLAP_TLS
+              value: "true"
+            - name: FLAP_LOG_LEVEL
+              value: "debug"
+            - name: FLAP_JSON_LOG
+              value: "false"
+          volumeMounts:
+            - name: tls
+              mountPath: "/etc/flap/tls"
+              readOnly: true
+      volumes:
+        - name: tls
+          secret:
+            secretName: flap-webhook-tls
