@@ -5,20 +5,27 @@
 # and outputs the total bytes read/written and access times.
 # 
 # Usage examples:
-#   trace -c "command"   -o output
-#   trace -p pid         -o output
-#   trace -n name        -o output
-#   trace -cg cgroupid   -o output
+#   trace -c "command"   -o output -d
+#   trace -p pid         -o output -d
+#   trace -n name        -o output -d
+#   trace -cg cgroupid   -o output -d
 
 set -eu
 
 print_usage() {
   cat <<EOF
 Usage:
-  $0 -c/--cmd   "command"   -o output     # trace a command and its subprocesses (bpftrace/tracings/cmd_trace.bt)
-  $0 -p/--pid   pid         -o output     # trace an existing process by PID (bpftrace/tracings/pid_trace.bt)
-  $0 -n/--name  name        -o output     # trace all processes by name (bpftrace/tracings/comm_trace.bt)
-  $0 -cg/--cgid cgroupid    -o output     # trace processes by cgroup ID (bpftrace/cgroups/cgroup_trace.bt)
+  $0 -flag [-o|--output output] [-d|--debug]
+
+Flags:
+  -c/--cmd   "command"    # trace a command and its subprocesses (bpftrace/tracings/cmd_trace.bt)
+  -p/--pid   pid          # trace an existing process by PID (bpftrace/tracings/pid_trace.bt)
+  -n/--name  name         # trace all processes by name (bpftrace/tracings/comm_trace.bt)
+  -cg/--cgid cgroupid     # trace processes by cgroup ID (bpftrace/cgroups/cgroup_trace.bt)
+
+Optional flags:
+  -o/--out output      File path to export the tracing logs (default is STDOUT)
+  -d/--debug           Display debug lines in bpftrace program
 
 Notes:
   - Precedence order: command > pid > name > cgroupid
@@ -34,6 +41,7 @@ pid=""
 name=""
 cgid=""
 out=""
+debug=0
 
 # parse options
 while [ $# -gt 0 ]; do
@@ -43,17 +51,11 @@ while [ $# -gt 0 ]; do
     -n|--name)  name="$2"; shift 2 ;;
     -cg|--cgid) cgid="$2"; shift 2 ;;
     -o|--out)   out="$2"; shift 2 ;;
+    -d|--debug) debug=1; shift 1 ;;
     -h|--help)  print_usage; exit 0 ;;
     *) echo "Unknown option: $1"; print_usage; exit 2 ;;
   esac
 done
-
-# require output
-if [ -z "$out" ]; then
-  printf "Error: output file must be specified with -o\n\n" >&2
-  print_usage
-  exit 2
-fi
 
 # check bpftrace availability
 if ! command -v bpftrace >/dev/null 2>&1; then
@@ -73,7 +75,13 @@ ensure_script() {
 # decide what to run
 if [ -n "$cmd" ]; then
   ensure_script "bpftrace/tracings/cmd_trace.bt"
-  bpftrace -c "$cmd" bpftrace/tracings/cmd_trace.bt > "$out"
+
+  if [ -n "$out" ]; then
+    bpftrace -c "$cmd" bpftrace/tracings/cmd_trace.bt "$debug" > "$out"
+  else
+    bpftrace -c "$cmd" bpftrace/tracings/cmd_trace.bt "$debug"
+  fi
+
   rc=$?
   if [ $rc -ne 0 ]; then
     printf "bpftrace exited with code %d\n" "$rc" >&2
@@ -88,7 +96,12 @@ elif [ -n "$pid" ]; then
     ''|*[!0-9]*) printf "Error: pid must be a positive integer.\n" >&2; exit 2 ;;
   esac
 
-  bpftrace bpftrace/tracings/pid_trace.bt "$pid" > "$out"
+  if [ -n "$out" ]; then
+    bpftrace bpftrace/tracings/pid_trace.bt "$pid" "$debug" > "$out"
+  else
+    bpftrace bpftrace/tracings/pid_trace.bt "$pid" "$debug"
+  fi
+
   rc=$?
   if [ $rc -ne 0 ]; then
     printf "bpftrace exited with code %d\n" "$rc" >&2
@@ -97,7 +110,13 @@ elif [ -n "$pid" ]; then
 
 elif [ -n "$name" ]; then
   ensure_script "bpftrace/tracings/comm_trace.bt"
-  bpftrace bpftrace/tracings/comm_trace.bt "$name" > "$out"
+
+  if [ -n "$out" ]; then
+    bpftrace bpftrace/tracings/comm_trace.bt "$name" "$debug" > "$out"
+  else
+    bpftrace bpftrace/tracings/comm_trace.bt "$name" "$debug"
+  fi
+
   rc=$?
   if [ $rc -ne 0 ]; then
     printf "bpftrace exited with code %d\n" "$rc" >&2
@@ -112,7 +131,12 @@ elif [ -n "$cgid" ]; then
     ''|*[!0-9]*) printf "Error: cgroupid must be a positive integer.\n" >&2; exit 2 ;;
   esac
 
-  bpftrace bpftrace/cgroups/cgroup_trace.bt "$cgid" > "$out"
+  if [ -n "$out" ]; then
+    bpftrace bpftrace/cgroups/cgroup_trace.bt "$cgid" "$debug" > "$out"
+  else
+    bpftrace bpftrace/cgroups/cgroup_trace.bt "$cgid" "$debug"
+  fi
+
   rc=$?
   if [ $rc -ne 0 ]; then
     printf "bpftrace exited with code %d\n" "$rc" >&2
