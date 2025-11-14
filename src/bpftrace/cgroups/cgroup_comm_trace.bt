@@ -551,6 +551,94 @@ tracepoint:syscalls:sys_exit_pwrite64
   delete(@write_start_time[tid]);
 }
 
+/* readv enter + exit */
+tracepoint:syscalls:sys_enter_readv
+/ cgroup == @tracked_cgid && comm == @tracked_comm /
+{
+  $fname = @fname[pid, args->fd];
+
+  if (@debug == 1) {
+    printf("[%s] %d %s ENTER readv fd=%d fname=%s vlen=0x%08lx\n",
+      strftime("%Y-%m-%d %H:%M:%S", nsecs),
+      pid, comm, args->fd, $fname, args->vlen);
+  }
+
+  @read_fd[tid] = args->fd;
+  @read_start_time[tid] = elapsed;
+}
+
+tracepoint:syscalls:sys_exit_readv
+/ cgroup == @tracked_cgid && comm == @tracked_comm /
+{
+  $fd = @read_fd[tid];
+  $fname = @fname[pid, $fd];
+
+  if (@debug == 1) {
+    printf("[%s] %d %s EXIT readv fd=%d fname=%s ret=%d\n",
+      strftime("%Y-%m-%d %H:%M:%S", nsecs),
+      pid, comm, $fd, $fname, args->ret);
+  }
+
+  if (args->ret > 0) {
+    if ($fname == "") {
+      @un_read_bytes[pid, $fd] = sum(args->ret);
+      @un_read_time[pid, $fd] = sum(elapsed - @read_start_time[tid]);
+      @un_read_count[pid, $fd] = count();
+    } else {
+      @read_bytes[$fname] = sum(args->ret);
+      @read_time[$fname] = sum(elapsed - @read_start_time[tid]);
+      @read_count[$fname] = count();
+    }
+  }
+
+  delete(@read_fd[tid]);
+  delete(@read_start_time[tid]);
+}
+
+/* writev enter + exit */
+tracepoint:syscalls:sys_enter_writev
+/ cgroup == @tracked_cgid && comm == @tracked_comm /
+{
+  $fname = @fname[pid, args->fd];
+
+  if (@debug == 1) {
+    printf("[%s] %d %s ENTER writev fd=%d fname=%s vlen=0x%08lx\n",
+      strftime("%Y-%m-%d %H:%M:%S", nsecs),
+      pid, comm, args->fd, $fname, args->vlen);
+  }
+
+  @write_fd[tid] = args->fd;
+  @write_start_time[tid] = elapsed;
+}
+
+tracepoint:syscalls:sys_exit_writev
+/ cgroup == @tracked_cgid && comm == @tracked_comm /
+{
+  $fd = @write_fd[tid];
+  $fname = @fname[pid, $fd];
+
+  if (@debug == 1) {
+    printf("[%s] %d %s EXIT writev fd=%d fname=%s ret=%d\n",
+      strftime("%Y-%m-%d %H:%M:%S", nsecs),
+      pid, comm, $fd, $fname, args->ret);
+  }
+
+  if (args->ret > 0) {
+    if ($fname == "") {
+      @un_write_bytes[pid, $fd] = sum(args->ret);
+      @un_write_time[pid, $fd] = sum(elapsed - @write_start_time[tid]);
+      @un_write_count[pid, $fd] = count();
+    } else {
+      @write_bytes[$fname] = sum(args->ret);
+      @write_time[$fname] = sum(elapsed - @write_start_time[tid]);
+      @write_count[$fname] = count();
+    }
+  }
+
+  delete(@write_fd[tid]);
+  delete(@write_start_time[tid]);
+}
+
 /* mmap2 enter + exit */
 tracepoint:syscalls:sys_enter_mmap
 / cgroup == @tracked_cgid && comm == @tracked_comm /
