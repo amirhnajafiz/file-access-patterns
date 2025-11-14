@@ -727,7 +727,7 @@ tracepoint:syscalls:sys_exit_pwritev
   delete(@write_start_time[tid]);
 }
 
-/* mmap2 enter + exit */
+/* mmap enter + exit */
 tracepoint:syscalls:sys_enter_mmap
 / cgroup == @tracked_cgid && comm == @tracked_comm /
 {
@@ -738,7 +738,7 @@ tracepoint:syscalls:sys_enter_mmap
   @mmap_len[tid] = args->len;
 
   if (@debug == 1) {
-    printf("[%s] %d %s ENTER mmap2 fd=%d fname=%s addr=0x%lx len=%lu prot=0x%x flags=0x%x off: 0x%081x\n",
+    printf("[%s] %d %s ENTER mmap fd=%d fname=%s addr=0x%lx len=%lu prot=0x%x flags=0x%x off: 0x%081x\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs),
       pid, comm, args->fd, $fname, args->addr, args->len, args->prot, args->flags, args->off);
   }
@@ -754,7 +754,7 @@ tracepoint:syscalls:sys_exit_mmap
   $fname = @fname[pid, $fd];
 
   if (@debug == 1) {
-    printf("[%s] %d %s EXIT mmap2 fd=%d fname=%s ret=0x%lx len=%lu\n",
+    printf("[%s] %d %s EXIT mmap fd=%d fname=%s ret=0x%lx len=%lu\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs),
       pid, comm, $fd, $fname, args->ret, $len);
   }
