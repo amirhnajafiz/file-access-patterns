@@ -283,12 +283,11 @@ tracepoint:syscalls:sys_enter_mmap
   // store mmap inputs for exit
   @mmap_fd[tid] = args->fd;
   @mmap_len[tid] = args->len;
-  @mmap_off[tid] = args->pgoffset * 4096ULL;
 
   if (@debug == 1) {
-    printf("[%s] %d %s ENTER mmap2 fd=%d fname=%s addr=0x%lx len=%lu prot=0x%x flags=0x%x off=%llu\n",
+    printf("[%s] %d %s ENTER mmap2 fd=%d fname=%s addr=0x%lx len=%lu prot=0x%x flags=0x%x\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs),
-      pid, comm, args->fd, $fname, args->addr, args->len, args->prot, args->flags, args->pgoffset * 4096ULL);
+      pid, comm, args->fd, $fname, args->addr, args->len, args->prot, args->flags);
   }
 
   @mmap_start_time[tid] = elapsed;
@@ -299,13 +298,12 @@ tracepoint:syscalls:sys_exit_mmap
 {
   $fd   = @mmap_fd[tid];
   $len  = @mmap_len[tid];
-  $off  = @mmap_off[tid];
   $fname = @fname[pid, $fd];
 
   if (@debug == 1) {
-    printf("[%s] %d %s EXIT mmap2 fd=%d fname=%s ret=0x%lx len=%lu off=%llu\n",
+    printf("[%s] %d %s EXIT mmap2 fd=%d fname=%s ret=0x%lx len=%lu\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs),
-      pid, comm, $fd, $fname, args->ret, $len, $off);
+      pid, comm, $fd, $fname, args->ret, $len);
   }
 
   if (args->ret != -1) {
@@ -322,7 +320,6 @@ tracepoint:syscalls:sys_exit_mmap
 
   delete(@mmap_fd[tid]);
   delete(@mmap_len[tid]);
-  delete(@mmap_off[tid]);
   delete(@mmap_start_time[tid]);
 }
 
