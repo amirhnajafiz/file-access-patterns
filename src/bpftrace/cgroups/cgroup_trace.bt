@@ -275,7 +275,7 @@ tracepoint:syscalls:sys_enter_close
 }
 
 /* mmap2 enter + exit */
-tracepoint:syscalls:sys_enter_mmap2
+tracepoint:syscalls:sys_enter_mmap
 / cgroup == @tracked_cgid /
 {
   $fname = @fname[pid, args->fd];
@@ -294,7 +294,7 @@ tracepoint:syscalls:sys_enter_mmap2
   @mmap_start_time[tid] = elapsed;
 }
 
-tracepoint:syscalls:sys_exit_mmap2
+tracepoint:syscalls:sys_exit_mmap
 / cgroup == @tracked_cgid /
 {
   $fd   = @mmap_fd[tid];
