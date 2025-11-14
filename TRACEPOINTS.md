@@ -1,6 +1,6 @@
 # Tracepoints
 
-FLAP core uses the following tracepoints in its logic. Only cgroup tracers don't need child process tracing tracepoints.
+FLAP relies on the following tracepoints. Among them, only the cgroup tracers do not require child-process tracing tracepoints.
 
 ## I/O Operation Syscalls
 

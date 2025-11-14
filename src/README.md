@@ -1,7 +1,14 @@
 # BPFTrace
 
-FLAP uses `bpftrace` at its core. There are two main entrypoints to use tracers. The `entrypoint/trace.sh` is the main script to initialize a tracing. The `entrypoint/boot.sh` is for Kubernetes integration that accepts information such as `Pod`, `Namespace`, and `Container`. For non-Kubernetes usage, it is suggested to use the `entrypoint/trace.sh` which provides usage instructions too.
+FLAP uses `bpftrace` at its core. There are two main entrypoints for using the tracers. The `entrypoint/trace.sh` script is the primary interface for initializing tracing. The `entrypoint/boot.sh` script is used for Kubernetes integration and accepts information such as the `Pod`, `Namespace`, and `Container`. For non-Kubernetes environments, it is recommended to use `entrypoint/trace.sh`, which also provides usage instructions.
+
+## Supported Tracers
+
+* Cgroup tracing
+* PID tracing
+* Command tracing
+* Sandbox tracing
 
 ## Unit Tests
 
-If you ever want to modify the tracing scripts in `bpftrace` directory, make sure to run `entrypoint/units.sh` to validate your changes.
+If you modify any tracing scripts in the `bpftrace` directory, make sure to run `entrypoint/units.sh` to validate your changes.

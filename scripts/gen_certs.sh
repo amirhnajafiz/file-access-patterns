@@ -1,4 +1,7 @@
 #!/bin/bash
+# file: scripts/gen_certs.sh
+
+# generating tls certificates for FLAP operator
 
 openssl genrsa -out ca.key 2048
 
