@@ -277,8 +277,6 @@ tracepoint:syscalls:sys_exit_statfs
 tracepoint:syscalls:sys_enter_statx
 / cgroup == @tracked_cgid && comm == @tracked_comm /
 {
-  @fname[pid, args->dfd] = args->filename;
-
   if (@debug == 1) {
     printf("[%s] %d %s ENTER statx dfd=%d fname=%s flags=0x%08lx\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs), pid, comm,
