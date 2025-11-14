@@ -259,21 +259,6 @@ tracepoint:syscalls:sys_exit_write
   delete(@write_start_time[tid]);
 }
 
-/* close enter + exit */
-tracepoint:syscalls:sys_enter_close
-/ cgroup == @tracked_cgid /
-{
-  $fname = @fname[pid, args->fd];
-
-  if (@debug == 1) {
-    printf("[%s] %d %s ENTER close fd=%d fname=%s\n",
-      strftime("%Y-%m-%d %H:%M:%S", nsecs),
-      pid, comm, args->fd, $fname);
-  }
-
-  @close_fd[tid] = args->fd;
-}
-
 /* mmap2 enter + exit */
 tracepoint:syscalls:sys_enter_mmap
 / cgroup == @tracked_cgid /
@@ -321,6 +306,21 @@ tracepoint:syscalls:sys_exit_mmap
   delete(@mmap_fd[tid]);
   delete(@mmap_len[tid]);
   delete(@mmap_start_time[tid]);
+}
+
+/* close enter + exit */
+tracepoint:syscalls:sys_enter_close
+/ cgroup == @tracked_cgid /
+{
+  $fname = @fname[pid, args->fd];
+
+  if (@debug == 1) {
+    printf("[%s] %d %s ENTER close fd=%d fname=%s\n",
+      strftime("%Y-%m-%d %H:%M:%S", nsecs),
+      pid, comm, args->fd, $fname);
+  }
+
+  @close_fd[tid] = args->fd;
 }
 
 tracepoint:syscalls:sys_exit_close
