@@ -1,20 +1,21 @@
 #!/usr/bin/env sh
 # file: entrypoint/units.sh
 
-set -u
+run_test() {
+    script="$1"
+    echo "Running $script..."
 
-tests=(
-    ./tests/test_cgroups.sh
-    ./tests/test_tracings.sh
-    ./tests/test_filter.sh
-)
+    "$script"
+    rc=$?
 
-for t in "${tests[@]}"; do
-    echo "Running $t..."
-    if ! "$t"; then
-        echo "❌ ERROR: $t failed!" >&2
+    if [ "$rc" -ne 0 ]; then
+        echo "ERROR: $script failed with exit code $rc" >&2
         exit 1
     fi
-done
+}
 
-echo "✔ All tests passed."
+run_test ./tests/test_cgroups.sh
+run_test ./tests/test_tracings.sh
+run_test ./tests/test_filter.sh
+
+echo "All tests passed."
