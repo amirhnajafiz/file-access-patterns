@@ -648,7 +648,7 @@ tracepoint:syscalls:sys_enter_preadv
   if (@debug == 1) {
     printf("[%s] %d %s ENTER preadv fd=%d fname=%s vlen=0x%08lx pos_l=0x%08lx pos_h=0x%08lx\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs),
-      pid, comm, args->fd, $fname, args->vlen, args->pos_l, args->post_h);
+      pid, comm, args->fd, $fname, args->vlen, args->pos_l, args->pos_h);
   }
 
   @read_fd[tid] = args->fd;
@@ -692,7 +692,7 @@ tracepoint:syscalls:sys_enter_pwritev
   if (@debug == 1) {
     printf("[%s] %d %s ENTER pwritev fd=%d fname=%s vlen=0x%08lx pos_l=0x%08lx pos_h=0x%08lx\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs),
-      pid, comm, args->fd, $fname, args->vlen, args->pos_l, args->post_h);
+      pid, comm, args->fd, $fname, args->vlen, args->pos_l, args->pos_h);
   }
 
   @write_fd[tid] = args->fd;
