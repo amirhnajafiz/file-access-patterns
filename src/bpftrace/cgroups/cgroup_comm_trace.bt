@@ -17,6 +17,49 @@ BEGIN
   }
 }
 
+// Metadata Extraction Syscalls
+/* creat enter + exit */
+tracepoint:syscalls:sys_enter_creat
+/ cgroup == @tracked_cgid && comm == @tracked_comm /
+{
+  if (@debug == 1) {
+    printf("[%s] %d %s ENTER creat fname=%s mode=0%o\n",
+      strftime("%Y-%m-%d %H:%M:%S", nsecs),
+      pid, comm, str(args->pathname), args->mode);
+  }
+
+  @open_fname[tid] = args->pathname;
+}
+
+tracepoint:syscalls:sys_exit_creat
+/ cgroup == @tracked_cgid && comm == @tracked_comm /
+{
+  $fname = str(@open_fname[tid]);
+
+  if (@debug == 1) {
+    printf("[%s] %d %s EXIT creat fname=%s ret=%d\n",
+      strftime("%Y-%m-%d %H:%M:%S", nsecs),
+      pid, comm, $fname, args->ret);
+  }
+
+  if (args->ret >= 0) {
+    @fname[pid, args->ret] = $fname;
+    // counting the overall bytes used in this file
+    @read_bytes[$fname] = sum(0);
+    @write_bytes[$fname] = sum(0);
+
+    // counting the overall time this file was open
+    @read_time[$fname] = sum(0);
+    @write_time[$fname] = sum(0);
+
+    // counting the number of times a file is accesses
+    @read_count[$fname] = count();
+    @write_count[$fname] = count();
+  }
+
+  delete(@open_fname[tid]);
+}
+
 /* open enter + exit */
 tracepoint:syscalls:sys_enter_open
 / cgroup == @tracked_cgid && comm == @tracked_comm /
@@ -126,11 +169,10 @@ tracepoint:syscalls:sys_exit_dup
       strftime("%Y-%m-%d %H:%M:%S", nsecs), pid, comm, $fd, $fname, args->ret);
   }
 
-  if (args->ret != -1) {
+  if (args->ret >= 0) {
     @fname[pid, args->ret] = $fname;
   }
 
-  delete(@fname[pid, $fd]);
   delete(@dup_fd[tid]);
 }
 
@@ -160,14 +202,173 @@ tracepoint:syscalls:sys_exit_dup2
       strftime("%Y-%m-%d %H:%M:%S", nsecs), pid, comm, $fd, $fname, args->ret);
   }
   
+  if (args->ret >= 0) {
+    @fname[pid, args->ret] = $fname;
+  }
+
+  delete(@dup_fd[tid]);
+}
+
+/* dup3 enter + exit */
+tracepoint:syscalls:sys_enter_dup3
+/ cgroup == @tracked_cgid && comm == @tracked_comm /
+{
+  $fname = @fname[pid, args->oldfd];
+
+  if (@debug == 1) {
+    printf("[%s] %d %s ENTER dup3 oldfd=%d newfd=%d fname=%s\n",
+      strftime("%Y-%m-%d %H:%M:%S", nsecs), pid, comm,
+      args->oldfd, args->newfd, $fname);
+  }
+  
+  @dup_fd[tid] = args->oldfd;
+}
+
+tracepoint:syscalls:sys_exit_dup3
+/ cgroup == @tracked_cgid && comm == @tracked_comm /
+{
+  $fd = @dup_fd[tid];
+  $fname = @fname[pid, $fd];
+
+  if (@debug == 1) {
+    printf("[%s] %d %s EXIT dup3 fd=%d fname=%s ret=%d\n",
+      strftime("%Y-%m-%d %H:%M:%S", nsecs), pid, comm, $fd, $fname, args->ret);
+  }
+  
+  if (args->ret >= 0) {
+    @fname[pid, args->ret] = $fname;
+  }
+
+  delete(@dup_fd[tid]);
+}
+
+/* statfs enter + exit */
+tracepoint:syscalls:sys_enter_statfs
+/ cgroup == @tracked_cgid && comm == @tracked_comm /
+{
+  if (@debug == 1) {
+    printf("[%s] %d %s ENTER statfs fname=%s\n",
+      strftime("%Y-%m-%d %H:%M:%S", nsecs), pid, comm,
+      str(args->pathname));
+  }
+
+  @stats_path[tid] = args->pathname;
+}
+
+tracepoint:syscalls:sys_exit_statfs
+/ cgroup == @tracked_cgid && comm == @tracked_comm /
+{
+  $fname = str(@stats_path[tid]);
+
+  if (@debug == 1) {
+    printf("[%s] %d %s EXIT statfs fname=%s\n",
+      strftime("%Y-%m-%d %H:%M:%S", nsecs), pid, comm,
+      $fname);
+  }
+
+  if (args->ret >= 0) {
+    @fname[pid, args->ret] = $fname;
+  }
+
+  delete(@stats_path[tid]);
+}
+
+/* statx enter + exit */
+tracepoint:syscalls:sys_enter_statx
+/ cgroup == @tracked_cgid && comm == @tracked_comm /
+{
+  @fname[pid, args->dfd] = args->filename;
+
+  if (@debug == 1) {
+    printf("[%s] %d %s ENTER statx dfd=%d fname=%s flags=0x%08lx\n",
+      strftime("%Y-%m-%d %H:%M:%S", nsecs), pid, comm,
+      args->dfd, str(args->filename), args->flags);
+  }
+
+  @stats_path[tid] = args->filename;
+}
+
+tracepoint:syscalls:sys_exit_statx
+/ cgroup == @tracked_cgid && comm == @tracked_comm /
+{
+  $fname = str(@stats_path[tid]);
+
+  if (@debug == 1) {
+    printf("[%s] %d %s EXIT statx fname=%s\n",
+      strftime("%Y-%m-%d %H:%M:%S", nsecs), pid, comm,
+      $fname);
+  }
+
+  if (args->ret >= 0) {
+    @fname[pid, args->ret] = $fname;
+  }
+
+  delete(@stats_path[tid]);
+}
+
+/* newstat enter + exit */
+tracepoint:syscalls:sys_enter_newstat
+/ cgroup == @tracked_cgid && comm == @tracked_comm /
+{
+  if (@debug == 1) {
+    printf("[%s] %d %s ENTER newstat fname=%s\n",
+      strftime("%Y-%m-%d %H:%M:%S", nsecs), pid, comm,
+      str(args->filename));
+  }
+
+  @stats_path[tid] = args->filename;
+}
+
+tracepoint:syscalls:sys_exit_newstat
+/ cgroup == @tracked_cgid && comm == @tracked_comm /
+{
+  $fname = str(@stats_path[tid]);
+
+  if (@debug == 1) {
+    printf("[%s] %d %s EXIT newstat fname=%s\n",
+      strftime("%Y-%m-%d %H:%M:%S", nsecs), pid, comm,
+      $fname);
+  }
+
+  if (args->ret >= 0) {
+    @fname[pid, args->ret] = $fname;
+  }
+
+  delete(@stats_path[tid]);
+}
+
+/* newlstat enter + exit */
+tracepoint:syscalls:sys_enter_newlstat
+/ cgroup == @tracked_cgid && comm == @tracked_comm /
+{
+  if (@debug == 1) {
+    printf("[%s] %d %s ENTER newlstat fname=%s\n",
+      strftime("%Y-%m-%d %H:%M:%S", nsecs), pid, comm,
+      str(args->filename));
+  }
+
+  @stats_path[tid] = args->filename;
+}
+
+tracepoint:syscalls:sys_exit_newlstat
+/ cgroup == @tracked_cgid && comm == @tracked_comm /
+{
+  $fname = str(@stats_path[tid]);
+
+  if (@debug == 1) {
+    printf("[%s] %d %s EXIT newlstat fname=%s\n",
+      strftime("%Y-%m-%d %H:%M:%S", nsecs), pid, comm,
+      $fname);
+  }
+
   if (args->ret != -1) {
     @fname[pid, args->ret] = $fname;
   }
 
-  delete(@fname[pid, $fd]);
-  delete(@dup_fd[tid]);
+  delete(@stats_path[tid]);
 }
 
+// I/O Operation Syscalls
 /* read enter + exit */
 tracepoint:syscalls:sys_enter_read
 / cgroup == @tracked_cgid && comm == @tracked_comm /
