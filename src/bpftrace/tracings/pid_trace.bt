@@ -861,12 +861,25 @@ interval:s:60
 
     print(@read_bytes);
     print(@write_bytes);
+    print(@un_read_bytes);
+    print(@un_write_bytes);
 
     print(@read_time);
     print(@write_time);
+    print(@un_read_time);
+    print(@un_write_time);
 
     print(@read_count);
     print(@write_count);
+    print(@un_read_time);
+    print(@un_write_time);
+
+    print(@mmap_bytes);
+    print(@mmap_time);
+    print(@mmap_count);
+    print(@un_mmap_bytes);
+    print(@un_mmap_time);
+    print(@un_mmap_count);
 
     printf("--- roatated ---\n");
   }
