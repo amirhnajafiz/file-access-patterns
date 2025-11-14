@@ -23,7 +23,7 @@ tracepoint:syscalls:sys_enter_open
   if (@debug == 1) {
     printf("[%s] %d %s ENTER open fname=%s flags=0x%x mode=0%o\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs),
-      pid, comm, str(args->filename), args->flags, args->mode, cgroup);
+      pid, comm, str(args->filename), args->flags, args->mode);
   }
 
   @open_fname[tid] = args->filename;
@@ -37,7 +37,7 @@ tracepoint:syscalls:sys_exit_open
   if (@debug == 1) {
     printf("[%s] %d %s EXIT open fname=%s ret=%d\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs),
-      pid, comm, $fname, args->ret, cgroup);
+      pid, comm, $fname, args->ret);
   }
 
   if (args->ret >= 0) {
@@ -65,7 +65,7 @@ tracepoint:syscalls:sys_enter_openat
   if (@debug == 1) {
     printf("[%s] %d %s ENTER openat dfd=%d fname=%s flags=0x%x mode=0%o\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs),
-      pid, comm, args->dfd, str(args->filename), args->flags, args->mode, cgroup);
+      pid, comm, args->dfd, str(args->filename), args->flags, args->mode);
   }
 
   @open_fname[tid] = args->filename;
@@ -79,7 +79,7 @@ tracepoint:syscalls:sys_exit_openat
   if (@debug == 1) {
     printf("[%s] %d %s EXIT openat fname=%s ret=%d\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs),
-      pid, comm, $fname, args->ret, cgroup);
+      pid, comm, $fname, args->ret);
   }
 
   if (args->ret >= 0) {
@@ -176,7 +176,7 @@ tracepoint:syscalls:sys_enter_read
   if (@debug == 1) {
     printf("[%s] %d %s ENTER read fd=%d fname=%s count=%d\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs),
-      pid, comm, args->fd, $fname, args->count, cgroup);
+      pid, comm, args->fd, $fname, args->count);
   }
 
   @read_fd[tid] = args->fd;
@@ -193,7 +193,7 @@ tracepoint:syscalls:sys_exit_read
   if (@debug == 1) {
     printf("[%s] %d %s EXIT read fd=%d fname=%s ret=%d req=%d\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs),
-      pid, comm, $fd, $fname, args->ret, @read_req_count[tid], cgroup);
+      pid, comm, $fd, $fname, args->ret, @read_req_count[tid]);
   }
 
   if (args->ret > 0) {
@@ -222,7 +222,7 @@ tracepoint:syscalls:sys_enter_write
   if (@debug == 1) {
     printf("[%s] %d %s ENTER write fd=%d fname=%s count=%d\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs),
-      pid, comm, args->fd, $fname, args->count, cgroup);
+      pid, comm, args->fd, $fname, args->count);
   }
 
   @write_fd[tid] = args->fd;
@@ -239,7 +239,7 @@ tracepoint:syscalls:sys_exit_write
   if (@debug == 1) {
     printf("[%s] %d %s EXIT write fd=%d fname=%s ret=%d req=%d\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs),
-      pid, comm, $fd, $fname, args->ret, @write_req_count[tid], cgroup);
+      pid, comm, $fd, $fname, args->ret, @write_req_count[tid]);
   }
 
   if (args->ret > 0) {
@@ -268,10 +268,62 @@ tracepoint:syscalls:sys_enter_close
   if (@debug == 1) {
     printf("[%s] %d %s ENTER close fd=%d fname=%s\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs),
-      pid, comm, args->fd, $fname, cgroup);
+      pid, comm, args->fd, $fname);
   }
 
   @close_fd[tid] = args->fd;
+}
+
+/* mmap2 enter + exit */
+tracepoint:syscalls:sys_enter_mmap2
+/ cgroup == @tracked_cgid /
+{
+  $fname = @fname[pid, args->fd];
+
+  // store mmap inputs for exit
+  @mmap_fd[tid] = args->fd;
+  @mmap_len[tid] = args->len;
+  @mmap_off[tid] = args->pgoffset * 4096ULL;
+
+  if (@debug == 1) {
+    printf("[%s] %d %s ENTER mmap2 fd=%d fname=%s addr=0x%lx len=%lu prot=0x%x flags=0x%x off=%llu\n",
+      strftime("%Y-%m-%d %H:%M:%S", nsecs),
+      pid, comm, args->fd, $fname, args->addr, args->len, args->prot, args->flags, args->pgoffset * 4096ULL);
+  }
+
+  @mmap_start_time[tid] = elapsed;
+}
+
+tracepoint:syscalls:sys_exit_mmap2
+/ cgroup == @tracked_cgid /
+{
+  $fd   = @mmap_fd[tid];
+  $len  = @mmap_len[tid];
+  $off  = @mmap_off[tid];
+  $fname = @fname[pid, $fd];
+
+  if (@debug == 1) {
+    printf("[%s] %d %s EXIT mmap2 fd=%d fname=%s ret=0x%lx len=%lu off=%llu\n",
+      strftime("%Y-%m-%d %H:%M:%S", nsecs),
+      pid, comm, $fd, $fname, args->ret, $len, $off);
+  }
+
+  if (args->ret != -1) {
+    if ($fname == "") {
+      @un_mmap_bytes[pid, $fd] = sum(args->ret);
+      @un_mmap_time[pid, $fd] = sum(elapsed - @mmap_start_time[tid]);
+      @un_mmap_count[pid, $fd] = count();
+    } else {
+      @mmap_bytes[pid, $fd] = sum(args->ret);
+      @mmap_time[pid, $fd] = sum(elapsed - @mmap_start_time[tid]);
+      @mmap_count[pid, $fd] = count();
+    }
+  }
+
+  delete(@mmap_fd[tid]);
+  delete(@mmap_len[tid]);
+  delete(@mmap_off[tid]);
+  delete(@mmap_start_time[tid]);
 }
 
 tracepoint:syscalls:sys_exit_close
@@ -283,7 +335,7 @@ tracepoint:syscalls:sys_exit_close
   if (@debug == 1) {
     printf("[%s] %d %s EXIT close fd=%d fname=%s ret=%d\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs),
-      pid, comm, $fd, $fname, args->ret, cgroup);
+      pid, comm, $fd, $fname, args->ret);
   }
 
   delete(@close_fd[tid]);
