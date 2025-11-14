@@ -108,13 +108,13 @@ echo "igniting tracer"
 
 # call the tracer by cgroup
 if [ -n "$command" ]; then
-  if [ -n "$output" ]; then
+  if [ -n "$output_path" ]; then
     bpftrace -o "${output_path}" bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}" "${debug}"
   else
     bpftrace bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}" "${debug}"
   fi
 else
-  if [ -n "$output" ]; then
+  if [ -n "$output_path" ]; then
     bpftrace -o "${output_path}" bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}" "${debug}"
   else
     bpftrace bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}" "${debug}"
