@@ -22,7 +22,7 @@ tracepoint:syscalls:sys_enter_open
 / cgroup == @tracked_cgid && comm == @tracked_comm /
 {
   if (@debug == 1) {
-    printf("[%s] %d %s ENTER open fname=%s flags=0x%x mode=0%o [CGID %llu]\n",
+    printf("[%s] %d %s ENTER open fname=%s flags=0x%x mode=0%o\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs),
       pid, comm, str(args->filename), args->flags, args->mode, cgroup);
   }
@@ -36,7 +36,7 @@ tracepoint:syscalls:sys_exit_open
   $fname = str(@open_fname[tid]);
 
   if (@debug == 1) {
-    printf("[%s] %d %s EXIT open fname=%s ret=%d [CGID %llu]\n",
+    printf("[%s] %d %s EXIT open fname=%s ret=%d\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs),
       pid, comm, $fname, args->ret, cgroup);
   }
@@ -64,7 +64,7 @@ tracepoint:syscalls:sys_enter_openat
 / cgroup == @tracked_cgid && comm == @tracked_comm /
 {
   if (@debug == 1) {
-    printf("[%s] %d %s ENTER openat dfd=%d fname=%s flags=0x%x mode=0%o [CGID %llu]\n",
+    printf("[%s] %d %s ENTER openat dfd=%d fname=%s flags=0x%x mode=0%o\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs),
       pid, comm, args->dfd, str(args->filename), args->flags, args->mode, cgroup);
   }
@@ -78,7 +78,7 @@ tracepoint:syscalls:sys_exit_openat
   $fname = str(@open_fname[tid]);
 
   if (@debug == 1) {
-    printf("[%s] %d %s EXIT openat fname=%s ret=%d [CGID %llu]\n",
+    printf("[%s] %d %s EXIT openat fname=%s ret=%d\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs),
       pid, comm, $fname, args->ret, cgroup);
   }
@@ -175,7 +175,7 @@ tracepoint:syscalls:sys_enter_read
   $fname = @fname[pid, args->fd];
 
   if (@debug == 1) {
-    printf("[%s] %d %s ENTER read fd=%d fname=%s count=%d [CGID %llu]\n",
+    printf("[%s] %d %s ENTER read fd=%d fname=%s count=%d\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs),
       pid, comm, args->fd, $fname, args->count, cgroup);
   }
@@ -192,7 +192,7 @@ tracepoint:syscalls:sys_exit_read
   $fname = @fname[pid, $fd];
 
   if (@debug == 1) {
-    printf("[%s] %d %s EXIT read fd=%d fname=%s ret=%d req=%d [CGID %llu]\n",
+    printf("[%s] %d %s EXIT read fd=%d fname=%s ret=%d req=%d\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs),
       pid, comm, $fd, $fname, args->ret, @read_req_count[tid], cgroup);
   }
@@ -221,7 +221,7 @@ tracepoint:syscalls:sys_enter_write
   $fname = @fname[pid, args->fd];
 
   if (@debug == 1) {
-    printf("[%s] %d %s ENTER write fd=%d fname=%s count=%d [CGID %llu]\n",
+    printf("[%s] %d %s ENTER write fd=%d fname=%s count=%d\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs),
       pid, comm, args->fd, $fname, args->count, cgroup);
   }
@@ -238,7 +238,7 @@ tracepoint:syscalls:sys_exit_write
   $fname = @fname[pid, $fd];
 
   if (@debug == 1) {
-    printf("[%s] %d %s EXIT write fd=%d fname=%s ret=%d req=%d [CGID %llu]\n",
+    printf("[%s] %d %s EXIT write fd=%d fname=%s ret=%d req=%d\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs),
       pid, comm, $fd, $fname, args->ret, @write_req_count[tid], cgroup);
   }
@@ -267,7 +267,7 @@ tracepoint:syscalls:sys_enter_close
   $fname = @fname[pid, args->fd];
 
   if (@debug == 1) {
-    printf("[%s] %d %s ENTER close fd=%d fname=%s [CGID %llu]\n",
+    printf("[%s] %d %s ENTER close fd=%d fname=%s\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs),
       pid, comm, args->fd, $fname, cgroup);
   }
@@ -282,7 +282,7 @@ tracepoint:syscalls:sys_exit_close
   $fname = @fname[pid, $fd];
 
   if (@debug == 1) {
-    printf("[%s] %d %s EXIT close fd=%d fname=%s ret=%d [CGID %llu]\n",
+    printf("[%s] %d %s EXIT close fd=%d fname=%s ret=%d\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs),
       pid, comm, $fd, $fname, args->ret, cgroup);
   }
