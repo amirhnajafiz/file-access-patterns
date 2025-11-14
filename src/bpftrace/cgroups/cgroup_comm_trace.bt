@@ -271,9 +271,9 @@ tracepoint:syscalls:sys_enter_mmap
   @mmap_len[tid] = args->len;
 
   if (@debug == 1) {
-    printf("[%s] %d %s ENTER mmap2 fd=%d fname=%s addr=0x%lx len=%lu prot=0x%x flags=0x%x\n",
+    printf("[%s] %d %s ENTER mmap2 fd=%d fname=%s addr=0x%lx len=%lu prot=0x%x flags=0x%x off: 0x%081x\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs),
-      pid, comm, args->fd, $fname, args->addr, args->len, args->prot, args->flags);
+      pid, comm, args->fd, $fname, args->addr, args->len, args->prot, args->flags, args->off);
   }
 
   @mmap_start_time[tid] = elapsed;
