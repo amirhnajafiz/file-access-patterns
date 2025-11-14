@@ -17,7 +17,7 @@ BEGIN
   }
 }
 
-// Metadata Extraction Syscalls
+// ----- Metadata Extraction Syscalls -----
 /* creat enter + exit */
 tracepoint:syscalls:sys_enter_creat
 / cgroup == @tracked_cgid && comm == @tracked_comm /
@@ -366,7 +366,7 @@ tracepoint:syscalls:sys_exit_newlstat
   delete(@stats_path[tid]);
 }
 
-// I/O Operation Syscalls
+// ----- I/O Operation Syscalls -----
 /* read enter + exit */
 tracepoint:syscalls:sys_enter_read
 / cgroup == @tracked_cgid && comm == @tracked_comm /
@@ -438,6 +438,98 @@ tracepoint:syscalls:sys_exit_write
 
   if (@debug == 1) {
     printf("[%s] %d %s EXIT write fd=%d fname=%s ret=%d req=%d\n",
+      strftime("%Y-%m-%d %H:%M:%S", nsecs),
+      pid, comm, $fd, $fname, args->ret, @write_req_count[tid]);
+  }
+
+  if (args->ret > 0) {
+    if ($fname == "") {
+      @un_write_bytes[pid, $fd] = sum(args->ret);
+      @un_write_time[pid, $fd] = sum(elapsed - @write_start_time[tid]);
+      @un_write_count[pid, $fd] = count();
+    } else {
+      @write_bytes[$fname] = sum(args->ret);
+      @write_time[$fname] = sum(elapsed - @write_start_time[tid]);
+      @write_count[$fname] = count();
+    }
+  }
+
+  delete(@write_fd[tid]);
+  delete(@write_req_count[tid]);
+  delete(@write_start_time[tid]);
+}
+
+/* pread64 enter + exit */
+tracepoint:syscalls:sys_enter_pread64
+/ cgroup == @tracked_cgid && comm == @tracked_comm /
+{
+  $fname = @fname[pid, args->fd];
+
+  if (@debug == 1) {
+    printf("[%s] %d %s ENTER pread64 fd=%d fname=%s count=%d pos=0x%08lx\n",
+      strftime("%Y-%m-%d %H:%M:%S", nsecs),
+      pid, comm, args->fd, $fname, args->count, args->pos);
+  }
+
+  @read_fd[tid] = args->fd;
+  @read_req_count[tid] = args->count;
+  @read_start_time[tid] = elapsed;
+}
+
+tracepoint:syscalls:sys_exit_pread64
+/ cgroup == @tracked_cgid && comm == @tracked_comm /
+{
+  $fd = @read_fd[tid];
+  $fname = @fname[pid, $fd];
+
+  if (@debug == 1) {
+    printf("[%s] %d %s EXIT pread64 fd=%d fname=%s ret=%d req=%d\n",
+      strftime("%Y-%m-%d %H:%M:%S", nsecs),
+      pid, comm, $fd, $fname, args->ret, @read_req_count[tid]);
+  }
+
+  if (args->ret > 0) {
+    if ($fname == "") {
+      @un_read_bytes[pid, $fd] = sum(args->ret);
+      @un_read_time[pid, $fd] = sum(elapsed - @read_start_time[tid]);
+      @un_read_count[pid, $fd] = count();
+    } else {
+      @read_bytes[$fname] = sum(args->ret);
+      @read_time[$fname] = sum(elapsed - @read_start_time[tid]);
+      @read_count[$fname] = count();
+    }
+  }
+
+  delete(@read_fd[tid]);
+  delete(@read_req_count[tid]);
+  delete(@read_start_time[tid]);
+}
+
+/* pwrite64 enter + exit */
+tracepoint:syscalls:sys_enter_pwrite64
+/ cgroup == @tracked_cgid && comm == @tracked_comm /
+{
+  $fname = @fname[pid, args->fd];
+
+  if (@debug == 1) {
+    printf("[%s] %d %s ENTER pwrite64 fd=%d fname=%s count=%d pos=0x%08lx\n",
+      strftime("%Y-%m-%d %H:%M:%S", nsecs),
+      pid, comm, args->fd, $fname, args->count, args->pos);
+  }
+
+  @write_fd[tid] = args->fd;
+  @write_req_count[tid] = args->count;
+  @write_start_time[tid] = elapsed;
+}
+
+tracepoint:syscalls:sys_exit_pwrite64
+/ cgroup == @tracked_cgid && comm == @tracked_comm /
+{
+  $fd = @write_fd[tid];
+  $fname = @fname[pid, $fd];
+
+  if (@debug == 1) {
+    printf("[%s] %d %s EXIT pwrite64 fd=%d fname=%s ret=%d req=%d\n",
       strftime("%Y-%m-%d %H:%M:%S", nsecs),
       pid, comm, $fd, $fname, args->ret, @write_req_count[tid]);
   }
@@ -539,6 +631,7 @@ tracepoint:syscalls:sys_exit_close
   delete(@fname[pid, $fd]);
 }
 
+/* ----- Intervals ----- */
 /* every 60 secunds print the maps */
 interval:s:60
 {

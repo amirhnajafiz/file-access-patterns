@@ -4,6 +4,8 @@
 
 - read: Reads data from a file descriptor into a buffer.
 - write: Writes data from a buffer to a file descriptor.
+- pread64: Reads data from a specific offset in a file descriptor without changing the file position.​
+- pwrite64: Writes data to a specific offset in a file descriptor without changing the file position.
 - mmap: Maps files or devices into memory, providing a pointer to the mapped area.
 - close: Closes an open file descriptor, freeing associated resources.
 
@@ -29,8 +31,6 @@
 
 I/O operations:
 
-- pread64: Reads data from a specific offset in a file descriptor without changing the file position.​
-- pwrite64: Writes data to a specific offset in a file descriptor without changing the file position.
 - readv: Reads data from a file descriptor into multiple buffers (vectorized I/O).
 - writev: Writes data to a file descriptor from multiple buffers (vectorized I/O).
 - preadv: Reads data from a file descriptor at a specific offset into multiple buffers.
