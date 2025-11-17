@@ -115,8 +115,8 @@ if [ -n "$command" ]; then
   fi
 else
   if [ -n "$output_path" ]; then
-    bpftrace -o "${output_path}" bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}" "${debug}"
+    bpftrace -o "${output_path}" bpftrace/cgroups/cgroup_trace.bt "${cgroupid}" "${debug}"
   else
-    bpftrace bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}" "${debug}"
+    bpftrace bpftrace/cgroups/cgroup_trace.bt "${cgroupid}" "${debug}"
   fi
 fi
