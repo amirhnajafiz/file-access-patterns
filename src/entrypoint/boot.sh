@@ -9,7 +9,7 @@ set -eu
 print_usage() {
   cat <<EOF
 Usage:
-  $0 --container <CONTAINER> --pod <POD> --namespace <NAMESPACE> [--command <COMMAND>]
+  $0 --container <CONTAINER> --pod <POD> --namespace <NAMESPACE> [--command <COMMAND>] [--output <OUTPUT>] [--debug]
 
 Required flags:
   --container   Container name or ID
