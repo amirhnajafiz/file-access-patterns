@@ -24,8 +24,9 @@ Flags:
   -cg/--cgid cgroupid     # trace processes by cgroup ID (bpftrace/cgroups/cgroup_trace.bt)
 
 Optional flags:
-  -o/--out output      File path to export the tracing logs (default is STDOUT)
-  -d/--debug           Display debug lines in bpftrace program
+  -o/--out output          File path to export the tracing logs (default is STDOUT)
+  -d/--debug                  Display debug lines in bpftrace program
+  -cgcmd "command"  Filter based on a command in cgroup tracing (only works when -cg is provided)          
 
 Notes:
   - Precedence order: command > pid > name > cgroupid
@@ -41,6 +42,7 @@ pid=""
 name=""
 cgid=""
 out=""
+cgcmd=""
 debug=0
 
 # parse options
@@ -50,6 +52,7 @@ while [ $# -gt 0 ]; do
     -p|--pid)   pid="$2"; shift 2 ;;
     -n|--name)  name="$2"; shift 2 ;;
     -cg|--cgid) cgid="$2"; shift 2 ;;
+    -cgcmd) cgcmd="$2"; shift 2;;
     -o|--out)   out="$2"; shift 2 ;;
     -d|--debug) debug=1; shift 1 ;;
     -h|--help)  print_usage; exit 0 ;;
@@ -77,7 +80,7 @@ if [ -n "$cmd" ]; then
   ensure_script "bpftrace/tracings/cmd_trace.bt"
 
   if [ -n "$out" ]; then
-    bpftrace -c "$cmd" bpftrace/tracings/cmd_trace.bt "$debug" > "$out"
+    bpftrace -o "$out" -c "$cmd" bpftrace/tracings/cmd_trace.bt "$debug"
   else
     bpftrace -c "$cmd" bpftrace/tracings/cmd_trace.bt "$debug"
   fi
@@ -97,7 +100,7 @@ elif [ -n "$pid" ]; then
   esac
 
   if [ -n "$out" ]; then
-    bpftrace bpftrace/tracings/pid_trace.bt "$pid" "$debug" > "$out"
+    bpftrace -o "$out" bpftrace/tracings/pid_trace.bt "$pid" "$debug"
   else
     bpftrace bpftrace/tracings/pid_trace.bt "$pid" "$debug"
   fi
@@ -112,7 +115,7 @@ elif [ -n "$name" ]; then
   ensure_script "bpftrace/tracings/comm_trace.bt"
 
   if [ -n "$out" ]; then
-    bpftrace bpftrace/tracings/comm_trace.bt "$name" "$debug" > "$out"
+    bpftrace -o "$out" bpftrace/tracings/comm_trace.bt "$name" "$debug"
   else
     bpftrace bpftrace/tracings/comm_trace.bt "$name" "$debug"
   fi
@@ -125,16 +128,25 @@ elif [ -n "$name" ]; then
 
 elif [ -n "$cgid" ]; then
   ensure_script "bpftrace/cgroups/cgroup_trace.bt"
+  ensure_script "bpftrace/cgroups/cgroup_comm_trace.bt"
 
   # validate cgid is numeric
   case $cgid in
     ''|*[!0-9]*) printf "Error: cgroupid must be a positive integer.\n" >&2; exit 2 ;;
   esac
 
-  if [ -n "$out" ]; then
-    bpftrace bpftrace/cgroups/cgroup_trace.bt "$cgid" "$debug" > "$out"
+  if [ -n "$cgcmd" ]; then
+    if [ -n "$out" ]; then
+      bpftrace -o "$out" bpftrace/cgroups/cgroup_trace.bt "$cgid" "$cgcmd" "$debug"
+    else
+      bpftrace bpftrace/cgroups/cgroup_trace.bt "$cgid" "$cgcmd" "$debug"
+    fi
   else
-    bpftrace bpftrace/cgroups/cgroup_trace.bt "$cgid" "$debug"
+    if [ -n "$out" ]; then
+      bpftrace -o "$out" bpftrace/cgroups/cgroup_trace.bt "$cgid" "$debug"
+    else
+      bpftrace bpftrace/cgroups/cgroup_trace.bt "$cgid" "$debug"
+    fi
   fi
 
   rc=$?
