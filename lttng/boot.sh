@@ -107,5 +107,6 @@ echo "pid namespace inode: ${pid_ns}"
 # input: cgroup path
 # find numeric cgroupid for a container
 cgroupid=$(stat -c %i "${path}")
+echo "${cgroupid}"
 
 echo "igniting tracer"
