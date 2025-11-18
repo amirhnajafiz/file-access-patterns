@@ -28,15 +28,20 @@ lttng add-context --session="${SESSION}" --kernel \
     --type tid \
     --type ppid \
     --type procname \
-    --type vpid \
-    --type vtid \
-    --type cgroup_ns \
-    --type prio \
-    --type nice \
-    --type ip \
-    --type ipc_ns \
+    --type hostname \
+    --type mnt_ns \
+    --type net_ns \
     --type pid_ns \
-    --type user_ns
+    --type ipc_ns \
+    --type user_ns \
+    --type cgroup_ns \
+    --type uid \
+    --type gid
+    # --type vpid \
+    # --type vtid \
+    # --type prio \
+    # --type nice \
+    # --type ip
 
 # start the tracer
 lttng start "${SESSION}"
