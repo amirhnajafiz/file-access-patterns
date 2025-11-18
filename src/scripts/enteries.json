@@ -4,7 +4,8 @@
         "begin": "bpftrace/templates/cgroup_comm_trace/begin.bt",
         "filter": "bpftrace/templates/cgroup_comm_trace/filter.bt",
         "out": "bpftrace/scripts/cgroup_comm_trace.bt",
-        "enable_subchild_tracing": false,
+        "enable_subprocess": false,
+        "subprocess": "",
         "file_name": "src/bpftrace/cgroup_comm_trace.bt",
         "usage_cmd": "sudo bpftrace -o /tmp/tracing.out cgroup_comm_trace.bt <CGROUP_ID> <NAME>"
     },
@@ -13,7 +14,8 @@
         "begin": "bpftrace/templates/cgroup_trace/begin.bt",
         "filter": "bpftrace/templates/cgroup_trace/filter.bt",
         "out": "bpftrace/scripts/cgroup_trace.bt",
-        "enable_subchild_tracing": false,
+        "enable_subprocess": false,
+        "subprocess": "",
         "file_name": "src/bpftrace/cgroup_trace.bt",
         "usage_cmd": "sudo bpftrace -o /tmp/tracing.out cgroup_trace.bt <CGROUP_ID>"
     },
@@ -22,7 +24,8 @@
         "begin": "bpftrace/templates/cmd_trace/begin.bt",
         "filter": "bpftrace/templates/cmd_trace/filter.bt",
         "out": "bpftrace/scripts/cmd_trace.bt",
-        "enable_subchild_tracing": true,
+        "enable_subprocess": true,
+        "subprocess": "bpftrace/templates/cmd_trace/subprocess.bt",
         "file_name": "src/bpftrace/cmd_trace.bt",
         "usage_cmd": "sudo bpftrace -c \"./myapp arg1 arg2\" -o /tmp/tracing.out cmd_trace.bt"
     },
@@ -31,7 +34,8 @@
         "begin": "bpftrace/templates/comm_trace/begin.bt",
         "filter": "bpftrace/templates/comm_trace/filter.bt",
         "out": "bpftrace/scripts/comm_trace.bt",
-        "enable_subchild_tracing": true,
+        "enable_subprocess": true,
+        "subprocess": "bpftrace/templates/comm_trace/subprocess.bt",
         "file_name": "src/bpftrace/comm_trace.bt",
         "usage_cmd": "sudo bpftrace -o /tmp/tracing.out comm_trace.bt <NAME>"
     },
@@ -40,7 +44,8 @@
         "begin": "bpftrace/templates/pid_trace/begin.bt",
         "filter": "bpftrace/templates/pid_trace/filter.bt",
         "out": "bpftrace/scripts/pid_trace.bt",
-        "enable_subchild_tracing": true,
+        "enable_subprocess": true,
+        "subprocess": "bpftrace/templates/pid_trace/subprocess.bt",
         "file_name": "src/bpftrace/pid_trace.bt",
         "usage_cmd": "sudo bpftrace -o /tmp/tracing.out pid_trace.bt <PID>"
     }

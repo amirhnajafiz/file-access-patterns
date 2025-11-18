@@ -10,10 +10,13 @@ def import_enteries(path: str) -> list:
     return data
 
 def read_to_str(path: str) -> str:
-    data = ""
-    with open(path, "r") as file:
-        data = file.read()
-    return data
+    try:
+        data = ""
+        with open(path, "r") as file:
+            data = file.read()
+        return data
+    except:
+        return ""
 
 def read_template(path: str):
     return Template(open(path).read())
@@ -35,7 +38,8 @@ if __name__ == "__main__":
             filter=filter_section,
             file_name=entry["file_name"],
             usage_cmd=entry["usage_cmd"],
-            enable_subchild_tracing=entry["enable_subchild_tracing"]
+            enable_subprocess=entry["enable_subprocess"],
+            subprocess=read_to_str(entry["subprocess"])
         )
         
         save_template(entry["out"], out)

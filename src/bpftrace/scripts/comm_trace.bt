@@ -24,7 +24,7 @@ tracepoint:sched:sched_process_fork
 
 /* when exec happens, if old_pid tracked ensure that the new pid is also tracked */
 tracepoint:sched:sched_process_exec
-/ comm == @tracked_comm || @tracked[args->parent_pid] /
+/ comm == @tracked_comm || @tracked[args->old_pid] /
 {
   printf("%llu { pid=%d tid=%d proc=%s } { ENTER exec } { pid=%d fname=%s }\n", nsecs, args->old_pid, tid, comm, args->pid, str(args->filename));
 
@@ -36,7 +36,7 @@ tracepoint:sched:sched_process_exec
 
 /* cleanup process fname table and untrack process */
 tracepoint:sched:sched_process_exit
-/ comm == @tracked_comm || @tracked[args->parent_pid] /
+/ @tracked[pid] /
 {
   printf("%llu { pid=%d tid=%d proc=%s } { EXIT process }\n", nsecs, pid, tid, comm);
 

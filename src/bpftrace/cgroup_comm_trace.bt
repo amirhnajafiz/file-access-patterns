@@ -250,7 +250,9 @@ tracepoint:syscalls:sys_exit_read
   $fname = @fname[pid, $fd];
   $latency = elapsed - @read_start_time[tid];
 
-  printf("%llu { pid=%d tid=%d proc=%s } { EXIT read } { fd=%d fname=%s ret=%d req=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, @read_req_count[tid], $latency);
+  if (args->ret >= 0) {
+    printf("%llu { pid=%d tid=%d proc=%s } { EXIT read } { fd=%d fname=%s ret=%d req=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, @read_req_count[tid], $latency);
+  }
 
   delete(@read_fd[tid]);
   delete(@read_req_count[tid]);
@@ -277,7 +279,9 @@ tracepoint:syscalls:sys_exit_write
   $fname = @fname[pid, $fd];
   $latency = elapsed - @write_start_time[tid];
 
-  printf("%llu { pid=%d tid=%d proc=%s } { EXIT write } { fd=%d fname=%s ret=%d req=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, @write_req_count[tid], $latency);
+  if (args->ret >= 0) {
+    printf("%llu { pid=%d tid=%d proc=%s } { EXIT write } { fd=%d fname=%s ret=%d req=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, @write_req_count[tid], $latency);
+  }
 
   delete(@write_fd[tid]);
   delete(@write_req_count[tid]);
@@ -304,7 +308,9 @@ tracepoint:syscalls:sys_exit_pread64
   $fname = @fname[pid, $fd];
   $latency = elapsed - @read_start_time[tid];
 
-  printf("%llu { pid=%d tid=%d proc=%s } { EXIT pread64 } { fd=%d fname=%s ret=%d req=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, @read_req_count[tid], $latency);
+  if (args->ret >= 0) {
+    printf("%llu { pid=%d tid=%d proc=%s } { EXIT pread64 } { fd=%d fname=%s ret=%d req=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, @read_req_count[tid], $latency);
+  }
 
   delete(@read_fd[tid]);
   delete(@read_req_count[tid]);
@@ -331,7 +337,9 @@ tracepoint:syscalls:sys_exit_pwrite64
   $fname = @fname[pid, $fd];
   $latency = elapsed - @write_start_time[tid];
 
-  printf("%llu { pid=%d tid=%d proc=%s } { EXIT pwrite64 } { fd=%d fname=%s ret=%d req=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, @write_req_count[tid], $latency);
+  if (args->ret >= 0) {
+    printf("%llu { pid=%d tid=%d proc=%s } { EXIT pwrite64 } { fd=%d fname=%s ret=%d req=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, @write_req_count[tid], $latency);
+  }
 
   delete(@write_fd[tid]);
   delete(@write_req_count[tid]);
@@ -357,7 +365,9 @@ tracepoint:syscalls:sys_exit_readv
   $fname = @fname[pid, $fd];
   $latency = elapsed - @read_start_time[tid];
 
-  printf("%llu { pid=%d tid=%d proc=%s } { EXIT readv } { fd=%d fname=%s ret=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, $latency);
+  if (args->ret >= 0) {
+    printf("%llu { pid=%d tid=%d proc=%s } { EXIT readv } { fd=%d fname=%s ret=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, $latency);
+  }
 
   delete(@read_fd[tid]);
   delete(@read_start_time[tid]);
@@ -382,7 +392,9 @@ tracepoint:syscalls:sys_exit_writev
   $fname = @fname[pid, $fd];
   $latency = elapsed - @write_start_time[tid];
 
-  printf("%llu { pid=%d tid=%d proc=%s } { EXIT writev } { fd=%d fname=%s ret=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, $latency);
+  if (args->ret >= 0) {
+    printf("%llu { pid=%d tid=%d proc=%s } { EXIT writev } { fd=%d fname=%s ret=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, $latency);
+  }
 
   delete(@write_fd[tid]);
   delete(@write_start_time[tid]);
@@ -407,7 +419,9 @@ tracepoint:syscalls:sys_exit_preadv
   $fname = @fname[pid, $fd];
   $latency = elapsed - @read_start_time[tid];
 
-  printf("%llu { pid=%d tid=%d proc=%s } { EXIT preadv } { fd=%d fname=%s ret=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, $latency);
+  if (args->ret >= 0) {
+    printf("%llu { pid=%d tid=%d proc=%s } { EXIT preadv } { fd=%d fname=%s ret=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, $latency);
+  }
 
   delete(@read_fd[tid]);
   delete(@read_start_time[tid]);
@@ -432,7 +446,9 @@ tracepoint:syscalls:sys_exit_pwritev
   $fname = @fname[pid, $fd];
   $latency = elapsed - @write_start_time[tid];
 
-  printf("%llu { pid=%d tid=%d proc=%s } { EXIT pwritev } { fd=%d fname=%s ret=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, $latency);
+  if (args->ret >= 0) {
+    printf("%llu { pid=%d tid=%d proc=%s } { EXIT pwritev } { fd=%d fname=%s ret=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, $latency);
+  }
 
   delete(@write_fd[tid]);
   delete(@write_start_time[tid]);
@@ -460,7 +476,9 @@ tracepoint:syscalls:sys_exit_mmap
   $len  = @mmap_len[tid];
   $latency = elapsed - @mmap_start_time[tid];
 
-  printf("%llu { pid=%d tid=%d proc=%s } { EXIT mmap } { fd=%d fname=%s ret=%d len=%llu latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, $len, $latency);
+  if (args->ret >= 0) {
+    printf("%llu { pid=%d tid=%d proc=%s } { EXIT mmap } { fd=%d fname=%s ret=%d len=%llu latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, $len, $latency);
+  }
 
   delete(@mmap_fd[tid]);
   delete(@mmap_len[tid]);
@@ -481,7 +499,10 @@ tracepoint:syscalls:sys_exit_close
 {
   $fd = @close_fd[tid];
   $fname = @fname[pid, $fd];
-  printf("%llu { pid=%d tid=%d proc=%s } { EXIT close } { fd=%d fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret);
 
+  if (args->ret >= 0) {
+    printf("%llu { pid=%d tid=%d proc=%s } { EXIT close } { fd=%d fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret);
+  }
+  
   delete(@close_fd[tid]);
 }
