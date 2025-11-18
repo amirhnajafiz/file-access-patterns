@@ -28,15 +28,15 @@ lttng add-context --session="${SESSION}" --kernel \
     --type tid \
     --type ppid \
     --type procname \
-    --type hostname \
-    --type mnt_ns \
-    --type net_ns \
-    --type pid_ns \
-    --type ipc_ns \
-    --type user_ns \
-    --type cgroup_ns \
-    --type uid \
-    --type gid
+    --type hostname
+    # --type mnt_ns \
+    # --type net_ns \
+    # --type pid_ns \
+    # --type ipc_ns \
+    # --type user_ns \
+    # --type cgroup_ns \
+    # --type uid \
+    # --type gid
     # --type vpid \
     # --type vtid \
     # --type prio \

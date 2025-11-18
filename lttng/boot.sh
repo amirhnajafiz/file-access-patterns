@@ -88,6 +88,12 @@ done
 # running: sudo find /sys/fs/cgroup/ -type d -name "*${containerid}*" => output is cgroupid (full path)
 path=$(find /sys/fs/cgroup/ -type d -name "*${containerid}*")
 
+# list all pids for the cgroup
+pids=$(cat "${path}/cgroup.procs")
+
+echo "PIDs in container (${containerid}) cgroup:"
+echo "${pids}"
+
 # input: cgroup path
 # find numeric cgroupid for a container
 cgroupid=$(stat -c %i "${path}")
