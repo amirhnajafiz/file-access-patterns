@@ -346,7 +346,7 @@ tracepoint:syscalls:sys_enter_readv
   @read_fd[tid] = args->fd;
   @read_start_time[tid] = elapsed;
 
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER readv } { fd=%d fname=%s vlen=0x%08lx }\n", nsecs, pid, comm, tid, args->fd, $fname, args->vlen);
+  printf("%llu { pid=%d tid=%d proc=%s } { ENTER readv } { fd=%d fname=%s vlen=0x%08lx }\n", nsecs, pid, tid, comm, args->fd, $fname, args->vlen);
 }
 
 tracepoint:syscalls:sys_exit_readv
