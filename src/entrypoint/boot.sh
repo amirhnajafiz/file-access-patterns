@@ -83,6 +83,13 @@ else
     echo "looking for ${container_name} in ${namespace}/${pod_name} ..."
 fi
 
+# print the data info
+ref_wall=$(date +%s.%N)
+ref_mono=$(cat /proc/uptime | awk '{print $1}')
+
+echo "ref wall: ${ref_wall}"
+echo "ref mono: ${ref_mono}"
+
 # running: sudo crictl ps => output is containerid
 while true; do
     echo "waiting ..."
