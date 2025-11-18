@@ -3,16 +3,16 @@
 
 set -eu
 
-directory="bpftrace/cgroups"
+directory="bpftrace"
 
 # test `tracings` scripts
-bpftrace -dd "${directory}/cgroup_trace.bt" 1 0
+bpftrace -dd "${directory}/cgroup_trace.bt" 1
 exit_status=$?
 if [ "$exit_status" -ne 0 ]; then
     echo "cgroup_trace.bt failed"
 fi
 
-bpftrace -dd -c "ls" "${directory}/cgroup_comm_trace.bt" 1 tmp 1
+bpftrace -dd -c "ls" "${directory}/cgroup_comm_trace.bt" 1 tmp
 exit_status=$?
 if [ "$exit_status" -ne 0 ]; then
     echo "cgroup_comm_trace.bt failed"

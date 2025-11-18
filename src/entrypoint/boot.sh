@@ -2,14 +2,14 @@
 # file: entrypoint/boot.sh
 
 # Usage:
-#   ./boot.sh --container <CONTAINER> --pod <POD> --namespace <NAMESPACE> [--command <COMMAND>] [--output <OUTPUT>] [--debug]
+#   ./boot.sh --container <CONTAINER> --pod <POD> --namespace <NAMESPACE> [--command <COMMAND>] [--output <OUTPUT>]
 
 set -eu
 
 print_usage() {
   cat <<EOF
 Usage:
-  $0 --container <CONTAINER> --pod <POD> --namespace <NAMESPACE> [--command <COMMAND>] [--output <OUTPUT>] [--debug]
+  $0 --container <CONTAINER> --pod <POD> --namespace <NAMESPACE> [--command <COMMAND>] [--output <OUTPUT>]
 
 Required flags:
   --container   Container name or ID
@@ -19,7 +19,6 @@ Required flags:
 Optional flags:
   --command     Command to execute inside the container
   --output      File path to export the tracing logs (default is STDOUT)
-  --debug       Display debug lines in bpftrace program
 EOF
 }
 
@@ -29,7 +28,6 @@ pod_name=""
 namespace=""
 command=""
 output_path=""
-debug=0
 
 # Parse arguments
 while [ $# -gt 0 ]; do
@@ -53,10 +51,6 @@ while [ $# -gt 0 ]; do
     --output)
       output_path="$2"
       shift 2
-      ;;
-    --debug)
-      debug=1
-      shift 1
       ;;
     -h|--help)
       print_usage
@@ -116,14 +110,14 @@ echo "igniting tracer"
 # call the tracer by cgroup
 if [ -n "$command" ]; then
   if [ -n "$output_path" ]; then
-    bpftrace -o "${output_path}" bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}" "${debug}"
+    bpftrace -o "${output_path}" bpftrace/cgroup_comm_trace.bt "${cgroupid}" "${command}"
   else
-    bpftrace bpftrace/cgroups/cgroup_comm_trace.bt "${cgroupid}" "${command}" "${debug}"
+    bpftrace bpftrace/cgroup_comm_trace.bt "${cgroupid}" "${command}"
   fi
 else
   if [ -n "$output_path" ]; then
-    bpftrace -o "${output_path}" bpftrace/cgroups/cgroup_trace.bt "${cgroupid}" "${debug}"
+    bpftrace -o "${output_path}" bpftrace/cgroup_trace.bt "${cgroupid}"
   else
-    bpftrace bpftrace/cgroups/cgroup_trace.bt "${cgroupid}" "${debug}"
+    bpftrace bpftrace/cgroup_trace.bt "${cgroupid}"
   fi
 fi

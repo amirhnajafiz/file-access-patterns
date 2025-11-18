@@ -3,7 +3,7 @@
 
 set -eu
 
-directory="bpftrace/tracings"
+directory="bpftrace"
 
 # test `tracings` scripts
 bpftrace -dd "${directory}/comm_trace.bt" tmp 1
