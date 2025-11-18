@@ -81,8 +81,9 @@ fi
 ref_wall=$(date +%s.%N)
 ref_mono=$(cat /proc/uptime | awk '{print $1}')
 
-echo "ref wall: ${ref_wall}"
-echo "ref mono: ${ref_mono}"
+echo "use these parameters for timestamp changes:"
+echo "\t ref wall: ${ref_wall}"
+echo "\t ref mono: ${ref_mono}"
 
 # running: sudo crictl ps => output is containerid
 while true; do

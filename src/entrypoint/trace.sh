@@ -66,6 +66,14 @@ ensure_script() {
   fi
 }
 
+# print the data info
+ref_wall=$(date +%s.%N)
+ref_mono=$(cat /proc/uptime | awk '{print $1}')
+
+echo "use these parameters for timestamp changes:"
+echo "\t ref wall: ${ref_wall}"
+echo "\t ref mono: ${ref_mono}"
+
 # decide what to run
 if [ -n "$cmd" ]; then
   ensure_script "bpftrace/tracings/cmd_trace.bt"
