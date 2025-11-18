@@ -1,16 +1,13 @@
 from jinja2 import Template
+import json
 
 
 
-ENTERIES = [
-    {
-        "source": "bpftrace/templates/trace.bt.j2",
-        "begin": "bpftrace/templates/cgroup_trace/begin.bt",
-        "filter": "bpftrace/templates/cgroup_trace/filter.bt",
-        "out": "bpftrace/scripts/cgroup_trace.bt"
-    }
-]
-
+def import_enteries(path: str) -> list:
+    data = {}
+    with open(path, "r") as file:
+        data = json.load(file)
+    return data
 
 def read_to_str(path: str) -> str:
     data = ""
@@ -26,9 +23,19 @@ def save_template(path: str, out):
 
 
 if __name__ == "__main__":
-    for entry in ENTERIES:
+    enteries = import_enteries("scripts/enteries.json")
+
+    for entry in enteries:
         tmp = read_template(entry["source"])
         begin_section = read_to_str(entry["begin"])
         filter_section = read_to_str(entry["filter"])
-        out = tmp.render(begin_section=begin_section, filter=filter_section)
+
+        out = tmp.render(
+            begin_section=begin_section, 
+            filter=filter_section,
+            file_name=entry["file_name"],
+            usage_cmd=entry["usage_cmd"],
+            enable_subchild_tracing=entry["enable_subchild_tracing"]
+        )
+        
         save_template(entry["out"], out)

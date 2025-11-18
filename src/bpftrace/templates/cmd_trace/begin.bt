@@ -1,0 +1,5 @@
+@fname[cpid, 0] = "STDIN";
+@fname[cpid, 1] = "STDOUT";
+@fname[cpid, 2] = "STDERR";
+@tracked[cpid] = 1;
+printf("%s START tracing file-access events for CPID %llu\n", strftime("%Y-%m-%d %H:%M:%S", nsecs), cpid);

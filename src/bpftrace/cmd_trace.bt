@@ -1,6 +1,6 @@
 #!/usr/bin/env bpftrace
 // file: src/bpftrace/cmd_trace.bt
-// sudo bpftrace -c "./myapp arg1 arg2" -o /tmp/tracing.out cmd_trace.bt
+// usage: sudo bpftrace -c "./myapp arg1 arg2" -o /tmp/tracing.out cmd_trace.bt
 // log format: [timestamp] { pid=[pid] tid=[tid] proc=[command] } { [ENTER|EXIT] [operand] } { [key=value] }
 
 BEGIN

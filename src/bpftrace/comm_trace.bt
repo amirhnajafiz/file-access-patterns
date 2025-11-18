@@ -1,6 +1,6 @@
 #!/usr/bin/env bpftrace
 // file: src/bpftrace/comm_trace.bt
-// sudo bpftrace -o /tmp/tracing.out comm_trace.bt <NAME>
+// usage: sudo bpftrace -o /tmp/tracing.out comm_trace.bt <NAME>
 // log format: [timestamp] { pid=[pid] tid=[tid] proc=[command] } { [ENTER|EXIT] [operand] } { [key=value] }
 
 BEGIN

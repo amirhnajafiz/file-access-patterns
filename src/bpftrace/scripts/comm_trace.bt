@@ -1,17 +1,18 @@
 #!/usr/bin/env bpftrace
-// file: {{ file_name }}
-// usage: {{ usage_cmd }}
+// file: src/bpftrace/comm_trace.bt
+// usage: sudo bpftrace -o /tmp/tracing.out comm_trace.bt <NAME>
 // log format: [timestamp] { pid=[pid] tid=[tid] proc=[command] } { [ENTER|EXIT] [operand] } { [key=value] }
 
 BEGIN
 {
-  {{ begin_section | indent(2, false) }}
+  @tracked_comm = str($1);
+  printf("%s START tracing file-access events for %s\n", strftime("%Y-%m-%d %H:%M:%S", nsecs), str($1));
 }
-{% if enable_subchild_tracing %}
+
 /* ----- Child Process Tracing ----- */
 /* when we see a fork, if parent is tracked then also track child */
 tracepoint:sched:sched_process_fork
-/ @tracked[args->parent_pid] /
+/ comm == @tracked_comm || @tracked[args->parent_pid] /
 {
   printf("%llu { pid=%d tid=%d proc=%s } { ENTER fork } { pid=%d comm=%s }\n", nsecs, args->parent_pid, args->parent_comm, args->child_pid, args->child_comm);
 
@@ -23,7 +24,7 @@ tracepoint:sched:sched_process_fork
 
 /* when exec happens, if old_pid tracked ensure that the new pid is also tracked */
 tracepoint:sched:sched_process_exec
-/ @tracked[args->old_pid] /
+/ comm == @tracked_comm || @tracked[args->parent_pid] /
 {
   printf("%llu { pid=%d tid=%d proc=%s } { ENTER exec } { pid=%d fname=%s }\n", nsecs, args->old_pid, tid, comm, args->pid, str(args->filename));
 
@@ -35,7 +36,7 @@ tracepoint:sched:sched_process_exec
 
 /* cleanup process fname table and untrack process */
 tracepoint:sched:sched_process_exit
-/ @tracked[pid] /
+/ comm == @tracked_comm || @tracked[args->parent_pid] /
 {
   printf("%llu { pid=%d tid=%d proc=%s } { EXIT process }\n", nsecs, pid, tid, comm);
 
@@ -44,18 +45,18 @@ tracepoint:sched:sched_process_exit
   delete(@fname[pid, 2]);
   delete(@tracked[pid]);
 }
-{% endif %}
+
 // ----- Metadata Extraction Syscalls -----
 /* creat enter + exit */
 tracepoint:syscalls:sys_enter_creat
-{{ filter }}
+/ @tracked[pid] /
 {
   printf("%llu { pid=%d tid=%d proc=%s } { ENTER creat } { fname=%s mode=0%o }\n", nsecs, pid, tid, comm, str(args->pathname), args->mode);
   @open_fname[tid] = args->pathname;
 }
 
 tracepoint:syscalls:sys_exit_creat
-{{ filter }}
+/ @tracked[pid] /
 {
   $fname = str(@open_fname[tid]);
   printf("%llu { pid=%d tid=%d proc=%s } { EXIT creat } { fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fname, args->ret);
@@ -69,14 +70,14 @@ tracepoint:syscalls:sys_exit_creat
 
 /* open enter + exit */
 tracepoint:syscalls:sys_enter_open
-{{ filter }}
+/ @tracked[pid] /
 {
   printf("%llu { pid=%d tid=%d proc=%s } { ENTER open } { fname=%s flags=0x%x mode=0%o }\n", nsecs, pid, tid, comm, str(args->filename), args->flags, args->mode);
   @open_fname[tid] = args->filename;
 }
 
 tracepoint:syscalls:sys_exit_open
-{{ filter }}
+/ @tracked[pid] /
 {
   $fname = str(@open_fname[tid]);
   printf("%llu { pid=%d tid=%d proc=%s } { EXIT open } { fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fname, args->ret);
@@ -90,14 +91,14 @@ tracepoint:syscalls:sys_exit_open
 
 /* openat enter + exit */
 tracepoint:syscalls:sys_enter_openat
-{{ filter }}
+/ @tracked[pid] /
 {
   printf("%llu { pid=%d tid=%d proc=%s } { ENTER openat } { dfd=%d fname=%s flags=0x%x mode=0%o }\n", nsecs, pid, tid, comm, args->dfd, str(args->filename), args->flags, args->mode);
   @open_fname[tid] = args->filename;
 }
 
 tracepoint:syscalls:sys_exit_openat
-{{ filter }}
+/ @tracked[pid] /
 {
   $fname = str(@open_fname[tid]);
   printf("%llu { pid=%d tid=%d proc=%s } { EXIT openat } { fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fname, args->ret);
@@ -111,7 +112,7 @@ tracepoint:syscalls:sys_exit_openat
 
 /* dup enter + exit */
 tracepoint:syscalls:sys_enter_dup
-{{ filter }}
+/ @tracked[pid] /
 {
   $fname = @fname[pid, args->fildes];
   printf("%llu { pid=%d tid=%d proc=%s } { ENTER dup } { fildes=%d fname=%s }\n", nsecs, pid, tid, comm, args->fildes, $fname);
@@ -119,7 +120,7 @@ tracepoint:syscalls:sys_enter_dup
 }
 
 tracepoint:syscalls:sys_exit_dup
-{{ filter }}
+/ @tracked[pid] /
 {
   $fd = @dup_fd[tid];
   $fname = @fname[pid, $fd];
@@ -134,7 +135,7 @@ tracepoint:syscalls:sys_exit_dup
 
 /* dup2 enter + exit */
 tracepoint:syscalls:sys_enter_dup2
-{{ filter }}
+/ @tracked[pid] /
 {
   $fname = @fname[pid, args->oldfd];
   printf("%llu { pid=%d tid=%d proc=%s } { ENTER dup2 } { oldfd=%d newfd=%d fname=%s }\n", nsecs, pid, tid, comm, args->oldfd, args->newfd, $fname);
@@ -142,7 +143,7 @@ tracepoint:syscalls:sys_enter_dup2
 }
 
 tracepoint:syscalls:sys_exit_dup2
-{{ filter }}
+/ @tracked[pid] /
 {
   $fd = @dup_fd[tid];
   $fname = @fname[pid, $fd];
@@ -157,7 +158,7 @@ tracepoint:syscalls:sys_exit_dup2
 
 /* dup3 enter + exit */
 tracepoint:syscalls:sys_enter_dup3
-{{ filter }}
+/ @tracked[pid] /
 {
   $fname = @fname[pid, args->oldfd];
   printf("%llu { pid=%d tid=%d proc=%s } { ENTER dup3 } { oldfd=%d newfd=%d fname=%s }\n", nsecs, pid, tid, comm, args->oldfd, args->newfd, $fname);
@@ -165,7 +166,7 @@ tracepoint:syscalls:sys_enter_dup3
 }
 
 tracepoint:syscalls:sys_exit_dup3
-{{ filter }}
+/ @tracked[pid] /
 {
   $fd = @dup_fd[tid];
   $fname = @fname[pid, $fd];
@@ -180,14 +181,14 @@ tracepoint:syscalls:sys_exit_dup3
 
 /* statfs enter + exit */
 tracepoint:syscalls:sys_enter_statfs
-{{ filter }}
+/ @tracked[pid] /
 {
   printf("%llu { pid=%d tid=%d proc=%s } { ENTER statfs } { fname=%s }\n", nsecs, pid, tid, comm, str(args->pathname));
   @stats_path[tid] = args->pathname;
 }
 
 tracepoint:syscalls:sys_exit_statfs
-{{ filter }}
+/ @tracked[pid] /
 {
   $fname = str(@stats_path[tid]);
   printf("%llu { pid=%d tid=%d proc=%s } { EXIT statfs } { fname=%s }\n", nsecs, pid, tid, comm, $fname);
@@ -201,14 +202,14 @@ tracepoint:syscalls:sys_exit_statfs
 
 /* statx enter + exit */
 tracepoint:syscalls:sys_enter_statx
-{{ filter }}
+/ @tracked[pid] /
 {
   printf("%llu { pid=%d tid=%d proc=%s } { ENTER statx } { dfd=%d fname=%s flags=0x%08lx }\n", nsecs, pid, tid, comm, args->dfd, str(args->filename), args->flags);
   @stats_path[tid] = args->filename;
 }
 
 tracepoint:syscalls:sys_exit_statx
-{{ filter }}
+/ @tracked[pid] /
 {
   $fname = str(@stats_path[tid]);
   printf("%llu { pid=%d tid=%d proc=%s } { EXIT statx } { fname=%s }\n", nsecs, pid, tid, comm, $fname);
@@ -222,14 +223,14 @@ tracepoint:syscalls:sys_exit_statx
 
 /* newstat enter + exit */
 tracepoint:syscalls:sys_enter_newstat
-{{ filter }}
+/ @tracked[pid] /
 {
   printf("%llu { pid=%d tid=%d proc=%s } { ENTER newstat } { fname=%s }\n", nsecs, pid, tid, comm, str(args->filename));
   @stats_path[tid] = args->filename;
 }
 
 tracepoint:syscalls:sys_exit_newstat
-{{ filter }}
+/ @tracked[pid] /
 {
   $fname = str(@stats_path[tid]);
 
@@ -244,14 +245,14 @@ tracepoint:syscalls:sys_exit_newstat
 
 /* newlstat enter + exit */
 tracepoint:syscalls:sys_enter_newlstat
-{{ filter }}
+/ @tracked[pid] /
 {
   printf("%llu { pid=%d tid=%d proc=%s } { ENTER newlstat } { fname=%s }\n", nsecs, pid, tid, comm, str(args->filename));
   @stats_path[tid] = args->filename;
 }
 
 tracepoint:syscalls:sys_exit_newlstat
-{{ filter }}
+/ @tracked[pid] /
 {
   $fname = str(@stats_path[tid]);
   
@@ -267,7 +268,7 @@ tracepoint:syscalls:sys_exit_newlstat
 // ----- I/O Operation Syscalls -----
 /* read enter + exit */
 tracepoint:syscalls:sys_enter_read
-{{ filter }}
+/ @tracked[pid] /
 {
   $fname = @fname[pid, args->fd];
 
@@ -279,7 +280,7 @@ tracepoint:syscalls:sys_enter_read
 }
 
 tracepoint:syscalls:sys_exit_read
-{{ filter }}
+/ @tracked[pid] /
 {
   $fd = @read_fd[tid];
   $fname = @fname[pid, $fd];
@@ -296,7 +297,7 @@ tracepoint:syscalls:sys_exit_read
 
 /* write enter + exit */
 tracepoint:syscalls:sys_enter_write
-{{ filter }}
+/ @tracked[pid] /
 {
   $fname = @fname[pid, args->fd];
 
@@ -308,7 +309,7 @@ tracepoint:syscalls:sys_enter_write
 }
 
 tracepoint:syscalls:sys_exit_write
-{{ filter }}
+/ @tracked[pid] /
 {
   $fd = @write_fd[tid];
   $fname = @fname[pid, $fd];
@@ -325,7 +326,7 @@ tracepoint:syscalls:sys_exit_write
 
 /* pread64 enter + exit */
 tracepoint:syscalls:sys_enter_pread64
-{{ filter }}
+/ @tracked[pid] /
 {
   $fname = @fname[pid, args->fd];
 
@@ -337,7 +338,7 @@ tracepoint:syscalls:sys_enter_pread64
 }
 
 tracepoint:syscalls:sys_exit_pread64
-{{ filter }}
+/ @tracked[pid] /
 {
   $fd = @read_fd[tid];
   $fname = @fname[pid, $fd];
@@ -354,7 +355,7 @@ tracepoint:syscalls:sys_exit_pread64
 
 /* pwrite64 enter + exit */
 tracepoint:syscalls:sys_enter_pwrite64
-{{ filter }}
+/ @tracked[pid] /
 {
   $fname = @fname[pid, args->fd];
 
@@ -366,7 +367,7 @@ tracepoint:syscalls:sys_enter_pwrite64
 }
 
 tracepoint:syscalls:sys_exit_pwrite64
-{{ filter }}
+/ @tracked[pid] /
 {
   $fd = @write_fd[tid];
   $fname = @fname[pid, $fd];
@@ -383,7 +384,7 @@ tracepoint:syscalls:sys_exit_pwrite64
 
 /* readv enter + exit */
 tracepoint:syscalls:sys_enter_readv
-{{ filter }}
+/ @tracked[pid] /
 {
   $fname = @fname[pid, args->fd];
 
@@ -394,7 +395,7 @@ tracepoint:syscalls:sys_enter_readv
 }
 
 tracepoint:syscalls:sys_exit_readv
-{{ filter }}
+/ @tracked[pid] /
 {
   $fd = @read_fd[tid];
   $fname = @fname[pid, $fd];
@@ -410,7 +411,7 @@ tracepoint:syscalls:sys_exit_readv
 
 /* writev enter + exit */
 tracepoint:syscalls:sys_enter_writev
-{{ filter }}
+/ @tracked[pid] /
 {
   $fname = @fname[pid, args->fd];
 
@@ -421,7 +422,7 @@ tracepoint:syscalls:sys_enter_writev
 }
 
 tracepoint:syscalls:sys_exit_writev
-{{ filter }}
+/ @tracked[pid] /
 {
   $fd = @write_fd[tid];
   $fname = @fname[pid, $fd];
@@ -437,7 +438,7 @@ tracepoint:syscalls:sys_exit_writev
 
 /* preadv enter + exit */
 tracepoint:syscalls:sys_enter_preadv
-{{ filter }}
+/ @tracked[pid] /
 {
   $fname = @fname[pid, args->fd];
 
@@ -448,7 +449,7 @@ tracepoint:syscalls:sys_enter_preadv
 }
 
 tracepoint:syscalls:sys_exit_preadv
-{{ filter }}
+/ @tracked[pid] /
 {
   $fd = @read_fd[tid];
   $fname = @fname[pid, $fd];
@@ -464,7 +465,7 @@ tracepoint:syscalls:sys_exit_preadv
 
 /* pwritev enter + exit */
 tracepoint:syscalls:sys_enter_pwritev
-{{ filter }}
+/ @tracked[pid] /
 {
   $fname = @fname[pid, args->fd];
 
@@ -475,7 +476,7 @@ tracepoint:syscalls:sys_enter_pwritev
 }
 
 tracepoint:syscalls:sys_exit_pwritev
-{{ filter }}
+/ @tracked[pid] /
 {
   $fd = @write_fd[tid];
   $fname = @fname[pid, $fd];
@@ -491,7 +492,7 @@ tracepoint:syscalls:sys_exit_pwritev
 
 /* mmap enter + exit */
 tracepoint:syscalls:sys_enter_mmap
-{{ filter }}
+/ @tracked[pid] /
 {
   $fname = @fname[pid, args->fd];
 
@@ -504,7 +505,7 @@ tracepoint:syscalls:sys_enter_mmap
 }
 
 tracepoint:syscalls:sys_exit_mmap
-{{ filter }}
+/ @tracked[pid] /
 {
   $fd   = @mmap_fd[tid]; 
   $fname = @fname[pid, $fd];
@@ -522,7 +523,7 @@ tracepoint:syscalls:sys_exit_mmap
 
 /* close enter + exit */
 tracepoint:syscalls:sys_enter_close
-{{ filter }}
+/ @tracked[pid] /
 {
   $fname = @fname[pid, args->fd];
   printf("%llu { pid=%d tid=%d proc=%s } { ENTER close } { fd=%d fname=%s }\n", nsecs, pid, tid, comm, args->fd, $fname);
@@ -530,7 +531,7 @@ tracepoint:syscalls:sys_enter_close
 }
 
 tracepoint:syscalls:sys_exit_close
-{{ filter }}
+/ @tracked[pid] /
 {
   $fd = @close_fd[tid];
   $fname = @fname[pid, $fd];
