@@ -90,23 +90,20 @@ path=$(find /sys/fs/cgroup/ -type d -name "*${containerid}*")
 
 # list all pids for the cgroup
 pids=$(cat "${path}/cgroup.procs")
-
 echo "PIDs in container (${containerid}) cgroup:"
 echo "${pids}"
 
 # select the lowest (oldest) PID in the cgroup as the likely init process
 init_pid=$(echo "${pids}" | sort -n | head -1)
-
 echo "Likely container init PID: ${init_pid}"
 
 # get the pid namespace inode using lsns
 pid_ns=$(lsns -n -t pid -o NS -p "${init_pid}" | awk 'NR==1 {print $1}')
-
 echo "pid namespace inode: ${pid_ns}"
 
 # input: cgroup path
 # find numeric cgroupid for a container
 cgroupid=$(stat -c %i "${path}")
-echo "${cgroupid}"
+echo "cgroup id: ${cgroupid}"
 
 echo "igniting tracer"
