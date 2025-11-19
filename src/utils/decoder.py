@@ -40,8 +40,9 @@ def resolve_fname(pid, fd):
 
         if path:
             return path
-    except:
-        pass
+    except Exception as e:
+        print(e)
+        sys.exit(1)
     return "UNKNOWN"
 
 def process_log(input_file, ref_mono, ref_wall, output_file):
