@@ -68,7 +68,6 @@ def process_log(input_file, ref_mono, ref_wall, output_file):
 
             m = pattern.match(line)
             if not m:
-                outfile.write(line + "\n")
                 continue
             
             # extract matched components

@@ -27,7 +27,7 @@ tracepoint:sched:sched_process_exec
 tracepoint:sched:sched_process_exit
 / @tracked[pid] /
 {
-  printf("%llu { pid=%d tid=%d proc=%s } { EXIT process }\n", nsecs, pid, tid, comm);
+  printf("%llu { pid=%d tid=%d proc=%s } { EXIT process } { }\n", nsecs, pid, tid, comm);
 
   delete(@fname[pid, 0]);
   delete(@fname[pid, 1]);
