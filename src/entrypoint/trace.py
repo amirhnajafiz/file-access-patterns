@@ -8,8 +8,17 @@ import subprocess
 import shutil
 import time
 import json
+import signal
 
 
+
+def handle_shutdown(signum, _):
+    print(f"\nReceived signal {signum}, shutting down safely ...")
+    sys.exit(0)
+
+# register handlers for SIGINT (Ctrl+C) and SIGTERM
+signal.signal(signal.SIGINT, handle_shutdown)
+signal.signal(signal.SIGTERM, handle_shutdown)
 
 def ensure_script(path):
     if not os.path.isfile(path):
