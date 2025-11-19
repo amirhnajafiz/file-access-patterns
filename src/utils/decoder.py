@@ -41,8 +41,7 @@ def resolve_fname(pid, fd):
         if path:
             return path
     except Exception as e:
-        print(e)
-        sys.exit(1)
+        print(f"resolve fname failed: {e}")
     return "UNKNOWN"
 
 def process_log(input_file, ref_mono, ref_wall, output_file):
@@ -54,8 +53,6 @@ def process_log(input_file, ref_mono, ref_wall, output_file):
 
             m = pattern.match(line)
             if not m:
-                # not matching → print & store as-is
-                print(line)
                 outfile.write(line + "\n")
                 continue
 
