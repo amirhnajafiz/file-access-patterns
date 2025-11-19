@@ -5,7 +5,7 @@ services:
   unit-test:
     build:
       context: .
-      dockerfile: build/Dockerfile
+      dockerfile: build/core/Dockerfile
     volumes:
       - /sys:/sys:rw
     ulimits:
@@ -17,15 +17,19 @@ services:
   # trace help only builds the image and runs the help command
   # to ensure the docker pipeline works without any errors.
   trace-help:
-    image: ghcr.io/amirhnajafiz/flap:v0.0.0-beta-10
-    entrypoint: ["/usr/local/app/entrypoint/trace.sh"]
+    build:
+      context: .
+      dockerfile: build/core/Dockerfile
+    entrypoint: ["python3", "/usr/local/app/entrypoint/trace.py"]
     command: ["-h"]
 
   # user end-to-end test runs a tracing operation to validate the
   # program functionality. If it works successfully, you should be able
   # to see the output in tests/logs directory.
   e2e:
-    image: ghcr.io/amirhnajafiz/flap:v0.0.0-beta-10
+    build:
+      context: .
+      dockerfile: build/core/Dockerfile
     privileged: true
     network_mode: host
     pid: host
@@ -37,7 +41,7 @@ services:
     volumes:
       - /sys:/sys:rw
       - ./tests/logs:/logs:rw
-    entrypoint: ["/usr/local/app/entrypoint/trace.sh"]
+    entrypoint: ["python3", "/usr/local/app/entrypoint/trace.py"]
     command: ["-c", "ls", "-o", "/logs/trace_ls.txt"]
 
 volumes:

@@ -23,6 +23,7 @@ RUN apt-get update && apt-get install -y \
     xz-utils \
     procps \
     strace \
+    python3.12 \
     && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory
@@ -32,7 +33,7 @@ WORKDIR /usr/local/app
 COPY src/ .
 
 # Set executable permissions for the trace script
-RUN chmod +x /usr/local/app/entrypoint/trace.sh && chmod +x /usr/local/app/entrypoint/boot.sh && chmod +x /usr/local/app/entrypoint/units.sh
+RUN chmod +x /usr/local/app/entrypoint/units.sh
 
 # Default command
 CMD ["/bin/sh"]
