@@ -1,8 +1,8 @@
 # file: utils/decoder.py
 import re
 import json
-import sys
 import subprocess
+import argparse
 
 from ts import convert
 
@@ -20,8 +20,7 @@ pattern = re.compile(
 )
 
 def parse_kv(block):
-    """parse key=value pairs inside the last {}.
-    """
+    """parse key=value pairs inside the last {}."""
     result = {}
     for item in block.split():
         if "=" in item:
@@ -29,24 +28,27 @@ def parse_kv(block):
             result[key] = value
     return result
 
-def resolve_fname(pid, fd):
-    """resolve file path from pid and fd.
-    """
+def resolve_fname(pid, fd, cache):
+    """resolve file path from pid and fd, using a cache dict keyed by (pid, fd)."""
+    key = (pid, fd)
+    if key in cache:
+        return cache[key]
     try:
         path = subprocess.check_output(
             ["./utils/rlink.sh", str(pid), str(fd)],
             stderr=subprocess.DEVNULL
         ).decode("utf-8").strip()
-
         if path:
+            cache[key] = path
             return path
     except Exception as e:
-        print(f"resolve fname failed: {e}")
+        print(f"resolve_fname failed: {e}")
+    cache[key] = "UNKNOWN"
     return "UNKNOWN"
 
 def process_log(input_file, ref_mono, ref_wall, output_file):
-    """read the input logs line by line and convert them into a jsonl
-    """
+    """read the input logs line by line and convert them into a jsonl"""
+    fname_cache = {}
     with open(input_file, "r") as infile, open(output_file, "w") as outfile:
         for line in infile:
             line = line.rstrip("\n")
@@ -55,7 +57,7 @@ def process_log(input_file, ref_mono, ref_wall, output_file):
             if not m:
                 outfile.write(line + "\n")
                 continue
-
+            
             # extract matched components
             timestamp = int(m.group("timestamp"))
             pid = int(m.group("pid"))
@@ -67,16 +69,14 @@ def process_log(input_file, ref_mono, ref_wall, output_file):
 
             kv = parse_kv(kv_raw)
 
-            # check the missing filename
             fname = kv.get("fname", "")
-
-            if fname == "" or fname is None:
+            if not fname:
                 fd = kv.get("fd")
                 if fd and pid:
-                    kv["fname"] = resolve_fname(pid, fd)
+                    kv["fname"] = resolve_fname(pid, fd, fname_cache)
                 else:
                     kv["fname"] = "UNKNOWN"
-
+            
             # construct structured data for saving
             parsed = {
                 "timestamp": convert(ref_mono, ref_wall, timestamp).isoformat(" "),
@@ -90,15 +90,15 @@ def process_log(input_file, ref_mono, ref_wall, output_file):
 
             outfile.write(json.dumps(parsed) + "\n")
 
+def main():
+    parser = argparse.ArgumentParser(description="Decode and reformat trace logs.")
+    parser.add_argument("--ref_mono", type=float, required=True, help="Reference monotonic base time (float seconds).")
+    parser.add_argument("--ref_wall", type=float, required=True, help="Reference wallclock base time (float seconds).")
+    parser.add_argument("--input", type=str, required=True, help="Input log file path.")
+    parser.add_argument("--output", type=str, required=True, help="Output JSONL file path.")
+    args = parser.parse_args()
+    
+    process_log(args.input, args.ref_mono, args.ref_wall, args.output)
 
 if __name__ == "__main__":
-    if len(sys.argv) != 5:
-        print("Usage: decoder.py <ref_mono> <ref_wall> <input> <output>")
-        sys.exit(1)
-
-    ref_mono = float(sys.argv[1])          # seconds (float)
-    ref_wall = float(sys.argv[2])          # seconds (float)
-    input_path = sys.argv[3]
-    output_path = sys.argv[4]
-    
-    process_log(input_path, ref_mono, ref_wall, output_path+".jsonl")
+    main()
