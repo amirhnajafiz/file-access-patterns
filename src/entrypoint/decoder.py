@@ -1,12 +1,10 @@
 # file: utils/decoder.py
 import argparse
+import datetime
 import re
 import json
 import os
 import subprocess
-
-
-from ..utils.ts import convert
 
 
 
@@ -20,6 +18,19 @@ pattern = re.compile(
     """,
     re.VERBOSE,
 )
+
+def convert(mono: float, wall: float, input: float) -> datetime.datetime:
+    """convert nanosecond to datetime."""
+    ref_mono_ns = mono * 1e9
+    ref_wall_ns = wall * 1e9
+
+    # convert monotonic ns → wall-clock ns
+    wall_ns = ref_wall_ns + (input - ref_mono_ns)
+
+    # convert to Python datetime
+    dt = datetime.datetime.fromtimestamp(wall_ns / 1e9)
+
+    return dt
 
 def parse_kv(block):
     """parse key=value pairs inside the last {}."""
