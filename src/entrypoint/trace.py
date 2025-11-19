@@ -73,11 +73,11 @@ def main():
     # determine which script to run
     bt_args = None
     if args.cmd:
-        script = "bpftrace/tracings/cmd_trace.bt"
+        script = "bpftrace/cmd_trace.bt"
         ensure_script(script)
         bt_args = ["bpftrace", "-o", f"{out}/logs.txt", "-c", args.cmd, script]
     elif args.pid:
-        script = "bpftrace/tracings/pid_trace.bt"
+        script = "bpftrace/pid_trace.bt"
         ensure_script(script)
 
         # Validate pid is numeric
@@ -87,11 +87,11 @@ def main():
 
         bt_args = ["bpftrace", "-o", f"{out}/logs.txt", script, args.pid]
     elif args.name:
-        script = "bpftrace/tracings/comm_trace.bt"
+        script = "bpftrace/comm_trace.bt"
         ensure_script(script)
         bt_args = ["bpftrace", "-o", f"{out}/logs.txt", script, args.name]
     elif args.cgid:
-        script = "bpftrace/cgroups/cgroup_trace.bt"
+        script = "bpftrace/cgroup_trace.bt"
         ensure_script(script)
 
         # validate cgid is numeric
