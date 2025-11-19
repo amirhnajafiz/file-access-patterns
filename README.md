@@ -6,6 +6,15 @@
 
 eBPF based tool for tracing file access patterns. This project is under development, so please don't use it in any critical environment.
 
+## Core
+
+FLAP uses `bpftrace` at its core.
+
+* Cgroup tracing
+* PID tracing
+* Command tracing
+* Sandbox tracing
+
 ## Operator
 
 1. Webhook on pod creation/delete
