@@ -78,7 +78,7 @@ echo "\t ref wall: ${ref_wall}"
 echo "\t ref mono: ${ref_mono}"
 
 # write logs/meta.json
-metadata="${out}/meta.json"
+meta_file="${out}/meta.json"
 cat > "$meta_file" <<EOF
 {
   "ref_wall": "${ref_wall}",
