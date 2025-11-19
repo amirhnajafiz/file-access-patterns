@@ -11,12 +11,6 @@ import json
 
 
 
-def print_usage_and_exit(parser, exitcode=0, msg=None):
-    if msg:
-        print(msg, file=sys.stderr)
-    parser.print_help()
-    sys.exit(exitcode)
-
 def main():
     parser = argparse.ArgumentParser(
         description="Bootstraps a tracing session for a pod/container. "
@@ -29,7 +23,6 @@ def main():
     parser.add_argument("--namespace", required=True, help="Kubernetes namespace")
     parser.add_argument("--command", help="Command to execute inside the container")
     parser.add_argument("--output", default="logs", help="Folder path to export the tracing logs")
-    parser.add_argument("-h", "--help", action="help", default=argparse.SUPPRESS)
 
     args = parser.parse_args()
     

@@ -11,12 +11,6 @@ import json
 
 
 
-def print_usage_and_exit(parser, exitcode=0, msg=None):
-    if msg:
-        print(msg, file=sys.stderr)
-    parser.print_help()
-    sys.exit(exitcode)
-
 def ensure_script(path):
     if not os.path.isfile(path):
         print(f"Error: required script '{path}' not found.", file=sys.stderr)
@@ -36,7 +30,6 @@ def main():
 
     parser.add_argument("-cgcmd", help="Filter based on a command in cgroup tracing (only works with -cg)")
     parser.add_argument("-o", "--out", default="logs", help="Folder path to export the tracing logs (default: logs)")
-    parser.add_argument("-h", "--help", action="help", default=argparse.SUPPRESS)
 
     args = parser.parse_args()
 
@@ -103,7 +96,6 @@ def main():
             bt_args = ["bpftrace", "-o", f"{out}/logs.txt", script, args.cgid]
     else:
         print("Error: either -c <command>, -p <pid>, -cg <cgroupid> or -n <name> must be provided.", file=sys.stderr)
-        print_usage_and_exit(parser, 2)
 
     # run bpftrace if arguments are set
     if bt_args:
