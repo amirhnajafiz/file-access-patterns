@@ -3,7 +3,7 @@
 tracepoint:sched:sched_process_fork
 / comm == @tracked_comm || @tracked[args->parent_pid] /
 {
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER fork } { pid=%d comm=%s }\n", nsecs, args->parent_pid, args->parent_comm, args->child_pid, args->child_comm);
+  printf("%llu { pid=%d tid=%d proc=%s } { ENTER fork } { pid=%d comm=%s }\n", nsecs, args->parent_pid, tid, args->parent_comm, args->child_pid, args->child_comm);
 
   @fname[pid, 0] = "STDIN";
   @fname[pid, 1] = "STDOUT";
