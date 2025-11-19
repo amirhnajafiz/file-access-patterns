@@ -4,12 +4,16 @@ import json
 
 
 def import_enteries(path: str) -> list:
+    """import the scripts data to build scripts based on templates.
+    """
     data = {}
     with open(path, "r") as file:
         data = json.load(file)
     return data
 
 def read_to_str(path: str) -> str:
+    """read a file data into a string.
+    """
     try:
         data = ""
         with open(path, "r") as file:
@@ -18,16 +22,23 @@ def read_to_str(path: str) -> str:
     except:
         return ""
 
-def read_template(path: str):
+def read_template(path: str) -> Template:
+    """read templates into jinja2 object.
+    """
     return Template(open(path).read())
 
-def save_template(path: str, out):
-    open(path, "w").write(out)
+def save_template(path: str, out: str) -> None:
+    """save the templates into files.
+    """
+    with open(path, "w") as file:
+        file.write(out)
 
 
 if __name__ == "__main__":
-    enteries = import_enteries("scripts/enteries.json")
+    # load scripts
+    enteries = import_enteries("scripts/scripts.json")
 
+    # build scripts based on templates
     for entry in enteries:
         tmp = read_template(entry["source"])
         begin_section = read_to_str(entry["begin"])
