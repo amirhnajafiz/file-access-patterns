@@ -81,13 +81,11 @@ def process_log(input_file, ref_mono, ref_wall, output_file):
 
             kv = parse_kv(kv_raw)
 
-            fname = kv.get("fname", "")
-            if not fname:
-                fd = kv.get("fd")
-                if fd and pid:
-                    kv["fname"] = resolve_fname(pid, fd, fname_cache)
-                else:
-                    kv["fname"] = "UNKNOWN"
+            fd = kv.get("fd")
+            if fd and pid:
+                kv["rfname"] = resolve_fname(pid, fd, fname_cache)
+            else:
+                kv["rfname"] = "UNKNOWN"
             
             # construct structured data for saving
             parsed = {
