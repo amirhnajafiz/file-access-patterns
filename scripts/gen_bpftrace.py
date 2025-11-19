@@ -40,7 +40,7 @@ def save_template(path: str, out: str) -> None:
 
 if __name__ == "__main__":
     # load scripts
-    enteries = import_enteries("bpftraces.json")
+    enteries = import_enteries("templates/bpftraces.json")
 
     # build scripts based on templates
     for entry in enteries:
