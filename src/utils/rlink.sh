@@ -10,4 +10,4 @@ pid=$1
 fd=$2
 
 # return the absolute path
-readlink -f "/proc/${pid}/fd/${fd}"
+sudo readlink -f "/proc/${pid}/fd/${fd}"
