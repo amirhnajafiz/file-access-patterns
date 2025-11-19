@@ -34,7 +34,7 @@ def resolve_fname(pid, fd):
     """
     try:
         path = subprocess.check_output(
-            ["./utils/rlink.sh", str(pid), str(fd)],
+            ["sudo", "./utils/rlink.sh", str(pid), str(fd)],
             stderr=subprocess.DEVNULL
         ).decode("utf-8").strip()
 
