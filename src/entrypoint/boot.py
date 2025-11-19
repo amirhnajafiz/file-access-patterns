@@ -12,8 +12,22 @@ import signal
 
 
 
+# this variable will be set after args are parsed to run the shutdown script upon termination
+GOUTPUT_PATH=""
+current_dir = os.path.dirname(os.path.abspath(__file__)) # directory of this script
+decoder_path = os.path.join(current_dir, "decoder.py")   # decoder.py in same dir
+
 def handle_shutdown(signum, _):
     print(f"\nReceived signal {signum}, shutting down safely ...")
+    print(f"Running decoder on output: {GOUTPUT_PATH}")
+    # use subprocess to call the decoder script
+    try:
+        subprocess.run(
+            ["python3", decoder_path, "--dir", GOUTPUT_PATH],
+            check=True
+        )
+    except subprocess.CalledProcessError as e:
+        print(f"Decoder script exited with error: {e}", file=sys.stderr)
     sys.exit(0)
 
 # register handlers for SIGINT (Ctrl+C) and SIGTERM
@@ -21,6 +35,8 @@ signal.signal(signal.SIGINT, handle_shutdown)
 signal.signal(signal.SIGTERM, handle_shutdown)
 
 def main():
+    global GOUTPUT_PATH
+
     parser = argparse.ArgumentParser(
         description="Bootstraps a tracing session for a pod/container. "
                     "Required: --container, --pod, --namespace. "
@@ -34,6 +50,7 @@ def main():
     parser.add_argument("--output", default="logs", help="Folder path to export the tracing logs")
 
     args = parser.parse_args()
+    GOUTPUT_PATH = args.out
     
     container_name = args.container
     pod_name = args.pod

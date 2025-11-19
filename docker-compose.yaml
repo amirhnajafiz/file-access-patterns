@@ -42,7 +42,7 @@ services:
       - /sys:/sys:rw
       - ./tests/logs:/logs:rw
     entrypoint: ["python3", "/usr/local/app/entrypoint/trace.py"]
-    command: ["-c", "ls", "-o", "/logs/trace_ls.txt"]
+    command: ["-c", "ls", "-o", "/logs/trace_ls"]
 
 volumes:
   logs:
