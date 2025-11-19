@@ -1,6 +1,5 @@
 #!/usr/bin/env sh
 # file: utils/rlink.sh
-
 # Usage:
 #   ./rlink.sh <PID> <FD>
 

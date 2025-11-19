@@ -1,6 +1,5 @@
 #!/usr/bin/env sh
 # file: entrypoint/trace.sh
-
 # Traces all file access events of a command and its sub-processes,
 # and outputs the total bytes read/written and access times.
 

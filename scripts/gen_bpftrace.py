@@ -1,3 +1,7 @@
+# file: scripts/gen_bpftrace.py
+
+# generating bpftrace scripts
+
 from jinja2 import Template
 import json
 
@@ -36,7 +40,7 @@ def save_template(path: str, out: str) -> None:
 
 if __name__ == "__main__":
     # load scripts
-    enteries = import_enteries("scripts/scripts.json")
+    enteries = import_enteries("bpftraces.json")
 
     # build scripts based on templates
     for entry in enteries:

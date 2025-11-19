@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
 # file: utils/ts.py
 # Usage: python3 ts.py 618549.44 1763500038.948841854 618552580474815
+
 import sys
 import datetime
 
