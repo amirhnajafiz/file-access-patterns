@@ -81,7 +81,7 @@ def process_log(input_file, ref_mono, ref_wall, output_file):
 
             # construct structured data for saving
             parsed = {
-                "timestamp": convert(ref_mono, ref_wall, timestamp),
+                "timestamp": convert(ref_mono, ref_wall, timestamp).isoformat(" "),
                 "pid": pid,
                 "tid": tid,
                 "proc": proc,
