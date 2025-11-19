@@ -18,7 +18,8 @@ current_dir = os.path.dirname(os.path.abspath(__file__)) # directory of this scr
 decoder_path = os.path.join(current_dir, "decoder.py")   # decoder.py in same dir
 
 def handle_shutdown(signum, _):
-    print(f"\nReceived signal {signum}, shutting down safely ...")
+    if signum != None:
+        print(f"\nReceived signal {signum}, shutting down safely ...")
     print(f"Running decoder on output: {GOUTPUT_PATH}")
     # use subprocess to call the decoder script
     try:
@@ -144,6 +145,7 @@ def main():
         tracer_args = ["bpftrace", "-o", log_out, "bpftrace/cgroup_trace.bt", cgroupid]
 
     rc = subprocess.call(tracer_args)
+    handle_shutdown(None, None)
     sys.exit(rc)
 
 if __name__ == "__main__":
