@@ -44,11 +44,11 @@ def main():
                     "Optional: --command, --output."
     )
 
-    parser.add_argument("--container", required=True, help="Container name or ID")
-    parser.add_argument("--pod", required=True, help="Pod name or ID")
-    parser.add_argument("--namespace", required=True, help="Kubernetes namespace")
-    parser.add_argument("--command", help="Command to execute inside the container")
-    parser.add_argument("--output", default="logs", help="Folder path to export the tracing logs")
+    parser.add_argument("-c", "--container", required=True, help="Container name or ID")
+    parser.add_argument("-p", "--pod", required=True, help="Pod name or ID")
+    parser.add_argument("-ns", "--namespace", required=True, help="Kubernetes namespace")
+    parser.add_argument("-cmd", "--command", help="Command to execute inside the container")
+    parser.add_argument("-o", "--output", default="logs", help="Folder path to export the tracing logs")
 
     args = parser.parse_args()
     GOUTPUT_PATH = args.out
