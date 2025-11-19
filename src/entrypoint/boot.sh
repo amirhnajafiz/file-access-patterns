@@ -17,7 +17,7 @@ Required flags:
 
 Optional flags:
   --command     Command to execute inside the container
-  --output      File path to export the tracing logs (default is STDOUT)
+  --output      Folder path to export the tracing logs, make sure its empty (default will create logs/ in the same directory)
 EOF
 }
 
@@ -26,7 +26,7 @@ container_name=""
 pod_name=""
 namespace=""
 command=""
-output_path=""
+output_path="logs"
 
 # Parse arguments
 while [ $# -gt 0 ]; do
@@ -70,6 +70,10 @@ if [ -z "$container_name" ] || [ -z "$pod_name" ] || [ -z "$namespace" ]; then
   exit 1
 fi
 
+# check the output directory
+rm -rf "$output_path"
+mkdir "$output_path"
+
 if [ -n "$command" ]; then
     echo "looking for ${container_name}/${command} in ${namespace}/${pod_name} ..."
 else
@@ -83,6 +87,17 @@ ref_mono=$(cat /proc/uptime | awk '{print $1}')
 echo "use these parameters for timestamp changes:"
 echo "\t ref wall: ${ref_wall}"
 echo "\t ref mono: ${ref_mono}"
+
+# write logs/meta.json
+metadata="${output_path}/meta.json"
+cat > "$meta_file" <<EOF
+{
+  "ref_wall": "${ref_wall}",
+  "ref_mono": "${ref_mono}"
+}
+EOF
+
+echo "Metadata saved to: $meta_file"
 
 # running: sudo crictl ps => output is containerid
 while true; do
@@ -109,15 +124,7 @@ echo "igniting tracer"
 
 # call the tracer by cgroup
 if [ -n "$command" ]; then
-  if [ -n "$output_path" ]; then
-    bpftrace -o "${output_path}" bpftrace/cgroup_comm_trace.bt "${cgroupid}" "${command}"
-  else
-    bpftrace bpftrace/cgroup_comm_trace.bt "${cgroupid}" "${command}"
-  fi
+  bpftrace -o "${output_path}/logs.txt" bpftrace/cgroup_comm_trace.bt "${cgroupid}" "${command}"
 else
-  if [ -n "$output_path" ]; then
-    bpftrace -o "${output_path}" bpftrace/cgroup_trace.bt "${cgroupid}"
-  else
-    bpftrace bpftrace/cgroup_trace.bt "${cgroupid}"
-  fi
+  bpftrace -o "${output_path}/logs.txt" bpftrace/cgroup_trace.bt "${cgroupid}"
 fi

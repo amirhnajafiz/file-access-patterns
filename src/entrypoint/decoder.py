@@ -1,10 +1,12 @@
 # file: utils/decoder.py
+import argparse
 import re
 import json
+import os
 import subprocess
-import argparse
 
-from ts import convert
+
+from utils.ts import convert
 
 
 
@@ -91,14 +93,21 @@ def process_log(input_file, ref_mono, ref_wall, output_file):
             outfile.write(json.dumps(parsed) + "\n")
 
 def main():
-    parser = argparse.ArgumentParser(description="Decode and reformat trace logs.")
-    parser.add_argument("--ref_mono", type=float, required=True, help="Reference monotonic base time (float seconds).")
-    parser.add_argument("--ref_wall", type=float, required=True, help="Reference wallclock base time (float seconds).")
-    parser.add_argument("--input", type=str, required=True, help="Input log file path.")
-    parser.add_argument("--output", type=str, required=True, help="Output JSONL file path.")
+    parser = argparse.ArgumentParser(description="Decode and reformat trace logs from a directory.")
+    parser.add_argument("--dir", type=str, default="logs", required=False, help="Input directory containing meta.json and logs.txt.")
     args = parser.parse_args()
-    
-    process_log(args.input, args.ref_mono, args.ref_wall, args.output)
+
+    input_dir = args.dir
+    meta_path = os.path.join(input_dir, "meta.json")
+    input_path = os.path.join(input_dir, "logs.txt")
+    output_path = os.path.join(input_dir, "logs.jsonl")
+
+    with open(meta_path, "r") as meta_file:
+        meta = json.load(meta_file)
+        ref_mono = float(meta['ref_mono'])
+        ref_wall = float(meta['ref_wall'])
+
+    process_log(input_path, ref_mono, ref_wall, output_path)
 
 if __name__ == "__main__":
     main()

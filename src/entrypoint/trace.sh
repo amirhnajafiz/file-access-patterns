@@ -17,7 +17,7 @@ Flags:
   -cg/--cgid cgroupid     # trace processes by cgroup ID (bpftrace/cgroup_trace.bt)
 
 Optional flags:
-  -o/--out output    File path to export the tracing logs (default is STDOUT)
+  -o/--out output    Folder path to export the tracing logs, make sure its empty (default will create logs/ in the same directory)
   -cgcmd "command"   Filter based on a command in cgroup tracing (only works when -cg is provided)          
 
 Notes:
@@ -33,7 +33,7 @@ cmd=""
 pid=""
 name=""
 cgid=""
-out=""
+out="logs"
 cgcmd=""
 
 # parse options
@@ -65,6 +65,10 @@ ensure_script() {
   fi
 }
 
+# check the output directory
+rm -rf "$out"
+mkdir "$out"
+
 # print the data info
 ref_wall=$(date +%s.%N)
 ref_mono=$(cat /proc/uptime | awk '{print $1}')
@@ -73,15 +77,22 @@ echo "use these parameters for timestamp changes:"
 echo "\t ref wall: ${ref_wall}"
 echo "\t ref mono: ${ref_mono}"
 
+# write logs/meta.json
+metadata="${out}/meta.json"
+cat > "$meta_file" <<EOF
+{
+  "ref_wall": "${ref_wall}",
+  "ref_mono": "${ref_mono}"
+}
+EOF
+
+echo "Metadata saved to: $meta_file"
+
 # decide what to run
 if [ -n "$cmd" ]; then
   ensure_script "bpftrace/tracings/cmd_trace.bt"
 
-  if [ -n "$out" ]; then
-    bpftrace -o "$out" -c "$cmd" bpftrace/tracings/cmd_trace.bt
-  else
-    bpftrace -c "$cmd" bpftrace/tracings/cmd_trace.bt
-  fi
+  bpftrace -o "${out}/logs.txt" -c "$cmd" bpftrace/tracings/cmd_trace.bt
 
   rc=$?
   if [ $rc -ne 0 ]; then
@@ -97,11 +108,7 @@ elif [ -n "$pid" ]; then
     ''|*[!0-9]*) printf "Error: pid must be a positive integer.\n" >&2; exit 2 ;;
   esac
 
-  if [ -n "$out" ]; then
-    bpftrace -o "$out" bpftrace/tracings/pid_trace.bt "$pid"
-  else
-    bpftrace bpftrace/tracings/pid_trace.bt "$pid"
-  fi
+  bpftrace -o "${out}/logs.txt" bpftrace/tracings/pid_trace.bt "$pid"
 
   rc=$?
   if [ $rc -ne 0 ]; then
@@ -112,11 +119,7 @@ elif [ -n "$pid" ]; then
 elif [ -n "$name" ]; then
   ensure_script "bpftrace/tracings/comm_trace.bt"
 
-  if [ -n "$out" ]; then
-    bpftrace -o "$out" bpftrace/tracings/comm_trace.bt "$name"
-  else
-    bpftrace bpftrace/tracings/comm_trace.bt "$name"
-  fi
+  bpftrace -o "${out}/logs.txt" bpftrace/tracings/comm_trace.bt "$name"
 
   rc=$?
   if [ $rc -ne 0 ]; then
@@ -134,17 +137,9 @@ elif [ -n "$cgid" ]; then
   esac
 
   if [ -n "$cgcmd" ]; then
-    if [ -n "$out" ]; then
-      bpftrace -o "$out" bpftrace/cgroups/cgroup_trace.bt "$cgid" "$cgcmd"
-    else
-      bpftrace bpftrace/cgroups/cgroup_trace.bt "$cgid" "$cgcmd"
-    fi
+    bpftrace -o "${out}/logs.txt" bpftrace/cgroups/cgroup_trace.bt "$cgid" "$cgcmd"
   else
-    if [ -n "$out" ]; then
-      bpftrace -o "$out" bpftrace/cgroups/cgroup_trace.bt "$cgid"
-    else
-      bpftrace bpftrace/cgroups/cgroup_trace.bt "$cgid"
-    fi
+    bpftrace -o "${out}/logs.txt" bpftrace/cgroups/cgroup_trace.bt "$cgid"
   fi
 
   rc=$?
