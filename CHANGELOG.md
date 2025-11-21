@@ -5,9 +5,9 @@
   * Tracing container must share host PID
   * Difficult to schedule regular sidecar container to run before main container
 
-- Approach 2: Init sidecar container
+- Approach 2: Sidecar init container
   * Run tracing container as init sidecar container in the same pod
-  * Init containers always run before the main container and persist if `restart: Always`
+  * Sidecar init containers always run before the main container and persist if `restart: Always`
   * Still difficult to obtain PID of root process in main container
   * Trace process in main container by name instead
   * Still unable to capture certain vllm I/O requests
