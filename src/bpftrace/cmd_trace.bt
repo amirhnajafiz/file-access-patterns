@@ -517,6 +517,7 @@ tracepoint:syscalls:sys_exit_mmap
 }
 
 /* vfs read + write */
+/*
 kfunc:vfs_read 
 / @tracked[pid] /
 {
@@ -528,6 +529,7 @@ kfunc:vfs_write
 {
   printf("%llu { pid=%d tid=%d proc=%s } { EN vfs_write } { file=%s }\n", nsecs, pid, tid, comm, str(args->file->f_path.dentry->d_name.name));
 }
+*/
 
 /* page fault user */
 tracepoint:exceptions:page_fault_user
