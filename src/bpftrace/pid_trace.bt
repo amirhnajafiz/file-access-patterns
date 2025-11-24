@@ -1,7 +1,7 @@
 #!/usr/bin/env bpftrace
 // file: src/bpftrace/pid_trace.bt
 // usage: sudo bpftrace -o /tmp/tracing.out pid_trace.bt <PID>
-// log format: [timestamp] { pid=[pid] tid=[tid] proc=[command] } { [ENTER|EXIT] [operand] } { [key=value] }
+// log format: [timestamp] { pid=[pid] tid=[tid] proc=[command] } { [EN|EX] [operand] } { [key=value] }
 
 BEGIN
 {
@@ -54,7 +54,7 @@ tracepoint:sched:sched_process_exit
 tracepoint:syscalls:sys_enter_creat
 / @tracked[pid] /
 {
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER creat } { fname=%s mode=0%o }\n", nsecs, pid, tid, comm, str(args->pathname), args->mode);
+  printf("%llu { pid=%d tid=%d proc=%s } { EN creat } { fname=%s mode=0%o }\n", nsecs, pid, tid, comm, str(args->pathname), args->mode);
   @open_fname[tid] = args->pathname;
 }
 
@@ -62,7 +62,7 @@ tracepoint:syscalls:sys_exit_creat
 / @tracked[pid] /
 {
   $fname = str(@open_fname[tid]);
-  printf("%llu { pid=%d tid=%d proc=%s } { EXIT creat } { fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fname, args->ret);
+  printf("%llu { pid=%d tid=%d proc=%s } { EX creat } { fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fname, args->ret);
 
   if (args->ret >= 0) {
     @fname[pid, args->ret] = $fname;
@@ -75,7 +75,7 @@ tracepoint:syscalls:sys_exit_creat
 tracepoint:syscalls:sys_enter_open
 / @tracked[pid] /
 {
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER open } { fname=%s flags=0x%x mode=0%o }\n", nsecs, pid, tid, comm, str(args->filename), args->flags, args->mode);
+  printf("%llu { pid=%d tid=%d proc=%s } { EN open } { fname=%s mode=0%o }\n", nsecs, pid, tid, comm, str(args->filename), args->mode);
   @open_fname[tid] = args->filename;
 }
 
@@ -83,7 +83,7 @@ tracepoint:syscalls:sys_exit_open
 / @tracked[pid] /
 {
   $fname = str(@open_fname[tid]);
-  printf("%llu { pid=%d tid=%d proc=%s } { EXIT open } { fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fname, args->ret);
+  printf("%llu { pid=%d tid=%d proc=%s } { EX open } { fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fname, args->ret);
 
   if (args->ret >= 0) {
     @fname[pid, args->ret] = $fname;
@@ -96,7 +96,7 @@ tracepoint:syscalls:sys_exit_open
 tracepoint:syscalls:sys_enter_openat
 / @tracked[pid] /
 {
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER openat } { dfd=%d fname=%s flags=0x%x mode=0%o }\n", nsecs, pid, tid, comm, args->dfd, str(args->filename), args->flags, args->mode);
+  printf("%llu { pid=%d tid=%d proc=%s } { EN openat } { fname=%s mode=0%o }\n", nsecs, pid, tid, comm, str(args->filename), args->mode);
   @open_fname[tid] = args->filename;
 }
 
@@ -104,7 +104,7 @@ tracepoint:syscalls:sys_exit_openat
 / @tracked[pid] /
 {
   $fname = str(@open_fname[tid]);
-  printf("%llu { pid=%d tid=%d proc=%s } { EXIT openat } { fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fname, args->ret);
+  printf("%llu { pid=%d tid=%d proc=%s } { EX openat } { fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fname, args->ret);
 
   if (args->ret >= 0) {
     @fname[pid, args->ret] = $fname;
@@ -118,7 +118,7 @@ tracepoint:syscalls:sys_enter_dup
 / @tracked[pid] /
 {
   $fname = @fname[pid, args->fildes];
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER dup } { fildes=%d fname=%s }\n", nsecs, pid, tid, comm, args->fildes, $fname);
+  printf("%llu { pid=%d tid=%d proc=%s } { EN dup } { fname=%s }\n", nsecs, pid, tid, comm, $fname);
   @dup_fd[tid] = args->fildes;
 }
 
@@ -127,7 +127,7 @@ tracepoint:syscalls:sys_exit_dup
 {
   $fd = @dup_fd[tid];
   $fname = @fname[pid, $fd];
-  printf("%llu { pid=%d tid=%d proc=%s } { EXIT dup } { fd=%d fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret);
+  printf("%llu { pid=%d tid=%d proc=%s } { EX dup } { fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fname, args->ret);
 
   if (args->ret >= 0) {
     @fname[pid, args->ret] = $fname;
@@ -141,7 +141,7 @@ tracepoint:syscalls:sys_enter_dup2
 / @tracked[pid] /
 {
   $fname = @fname[pid, args->oldfd];
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER dup2 } { oldfd=%d newfd=%d fname=%s }\n", nsecs, pid, tid, comm, args->oldfd, args->newfd, $fname);
+  printf("%llu { pid=%d tid=%d proc=%s } { EN dup2 } { fname=%s }\n", nsecs, pid, tid, comm, $fname);
   @dup_fd[tid] = args->oldfd;
 }
 
@@ -150,7 +150,7 @@ tracepoint:syscalls:sys_exit_dup2
 {
   $fd = @dup_fd[tid];
   $fname = @fname[pid, $fd];
-  printf("%llu { pid=%d tid=%d proc=%s } { EXIT dup2 } { fd=%d fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret);
+  printf("%llu { pid=%d tid=%d proc=%s } { EX dup2 } { fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fname, args->ret);
   
   if (args->ret >= 0) {
     @fname[pid, args->ret] = $fname;
@@ -164,7 +164,7 @@ tracepoint:syscalls:sys_enter_dup3
 / @tracked[pid] /
 {
   $fname = @fname[pid, args->oldfd];
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER dup3 } { oldfd=%d newfd=%d fname=%s }\n", nsecs, pid, tid, comm, args->oldfd, args->newfd, $fname);
+  printf("%llu { pid=%d tid=%d proc=%s } { EN dup3 } { fname=%s }\n", nsecs, pid, tid, comm, $fname);
   @dup_fd[tid] = args->oldfd;
 }
 
@@ -173,7 +173,7 @@ tracepoint:syscalls:sys_exit_dup3
 {
   $fd = @dup_fd[tid];
   $fname = @fname[pid, $fd];
-  printf("%llu { pid=%d tid=%d proc=%s } { EXIT dup3 } { fd=%d fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret);
+  printf("%llu { pid=%d tid=%d proc=%s } { EX dup3 } { fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fname, args->ret);
   
   if (args->ret >= 0) {
     @fname[pid, args->ret] = $fname;
@@ -186,7 +186,7 @@ tracepoint:syscalls:sys_exit_dup3
 tracepoint:syscalls:sys_enter_statfs
 / @tracked[pid] /
 {
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER statfs } { fname=%s }\n", nsecs, pid, tid, comm, str(args->pathname));
+  printf("%llu { pid=%d tid=%d proc=%s } { EN statfs } { fname=%s }\n", nsecs, pid, tid, comm, str(args->pathname));
   @stats_path[tid] = args->pathname;
 }
 
@@ -194,7 +194,7 @@ tracepoint:syscalls:sys_exit_statfs
 / @tracked[pid] /
 {
   $fname = str(@stats_path[tid]);
-  printf("%llu { pid=%d tid=%d proc=%s } { EXIT statfs } { fname=%s }\n", nsecs, pid, tid, comm, $fname);
+  printf("%llu { pid=%d tid=%d proc=%s } { EX statfs } { fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fname, args->ret);
 
   if (args->ret >= 0) {
     @fname[pid, args->ret] = $fname;
@@ -207,7 +207,7 @@ tracepoint:syscalls:sys_exit_statfs
 tracepoint:syscalls:sys_enter_statx
 / @tracked[pid] /
 {
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER statx } { dfd=%d fname=%s flags=0x%08lx }\n", nsecs, pid, tid, comm, args->dfd, str(args->filename), args->flags);
+  printf("%llu { pid=%d tid=%d proc=%s } { EN statx } { fname=%s }\n", nsecs, pid, tid, comm, str(args->filename));
   @stats_path[tid] = args->filename;
 }
 
@@ -215,7 +215,7 @@ tracepoint:syscalls:sys_exit_statx
 / @tracked[pid] /
 {
   $fname = str(@stats_path[tid]);
-  printf("%llu { pid=%d tid=%d proc=%s } { EXIT statx } { fname=%s }\n", nsecs, pid, tid, comm, $fname);
+  printf("%llu { pid=%d tid=%d proc=%s } { EX statx } { fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fname, args->ret);
 
   if (args->ret >= 0) {
     @fname[pid, args->ret] = $fname;
@@ -228,7 +228,7 @@ tracepoint:syscalls:sys_exit_statx
 tracepoint:syscalls:sys_enter_newstat
 / @tracked[pid] /
 {
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER newstat } { fname=%s }\n", nsecs, pid, tid, comm, str(args->filename));
+  printf("%llu { pid=%d tid=%d proc=%s } { EN newstat } { fname=%s }\n", nsecs, pid, tid, comm, str(args->filename));
   @stats_path[tid] = args->filename;
 }
 
@@ -237,7 +237,7 @@ tracepoint:syscalls:sys_exit_newstat
 {
   $fname = str(@stats_path[tid]);
 
-  printf("%llu { pid=%d tid=%d proc=%s } { EXIT newstat } { fname=%s }\n", nsecs, pid, tid, comm, $fname);
+  printf("%llu { pid=%d tid=%d proc=%s } { EX newstat } { fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fname, args->ret);
 
   if (args->ret >= 0) {
     @fname[pid, args->ret] = $fname;
@@ -250,7 +250,7 @@ tracepoint:syscalls:sys_exit_newstat
 tracepoint:syscalls:sys_enter_newlstat
 / @tracked[pid] /
 {
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER newlstat } { fname=%s }\n", nsecs, pid, tid, comm, str(args->filename));
+  printf("%llu { pid=%d tid=%d proc=%s } { EN newlstat } { fname=%s }\n", nsecs, pid, tid, comm, str(args->filename));
   @stats_path[tid] = args->filename;
 }
 
@@ -259,7 +259,7 @@ tracepoint:syscalls:sys_exit_newlstat
 {
   $fname = str(@stats_path[tid]);
   
-  printf("%llu { pid=%d tid=%d proc=%s } { EXIT newlstat } { fname=%s }\n", nsecs, pid, tid, comm, $fname);
+  printf("%llu { pid=%d tid=%d proc=%s } { EX newlstat } { fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fname, args->ret);
 
   if (args->ret >= 0) {
     @fname[pid, args->ret] = $fname;
@@ -276,10 +276,9 @@ tracepoint:syscalls:sys_enter_read
   $fname = @fname[pid, args->fd];
 
   @read_fd[tid] = args->fd;
-  @read_req_count[tid] = args->count;
   @read_start_time[tid] = elapsed;
 
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER read } { fd=%d fname=%s count=%d }\n", nsecs, pid, tid, comm, args->fd, $fname, args->count);
+  printf("%llu { pid=%d tid=%d proc=%s } { EN read } { fd=%d fname=%s count=%d }\n", nsecs, pid, tid, comm, args->fd, $fname, args->count);
 }
 
 tracepoint:syscalls:sys_exit_read
@@ -290,11 +289,10 @@ tracepoint:syscalls:sys_exit_read
   $latency = elapsed - @read_start_time[tid];
 
   if (args->ret >= 0) {
-    printf("%llu { pid=%d tid=%d proc=%s } { EXIT read } { fd=%d fname=%s ret=%d req=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, @read_req_count[tid], $latency);
+    printf("%llu { pid=%d tid=%d proc=%s } { EX read } { fd=%d fname=%s ret=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, $latency);
   }
 
   delete(@read_fd[tid]);
-  delete(@read_req_count[tid]);
   delete(@read_start_time[tid]);
 }
 
@@ -305,10 +303,9 @@ tracepoint:syscalls:sys_enter_write
   $fname = @fname[pid, args->fd];
 
   @write_fd[tid] = args->fd;
-  @write_req_count[tid] = args->count;
   @write_start_time[tid] = elapsed;
 
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER write } { fd=%d fname=%s count=%d }\n", nsecs, pid, tid, comm, args->fd, $fname, args->count);
+  printf("%llu { pid=%d tid=%d proc=%s } { EN write } { fd=%d fname=%s count=%d }\n", nsecs, pid, tid, comm, args->fd, $fname, args->count);
 }
 
 tracepoint:syscalls:sys_exit_write
@@ -319,11 +316,10 @@ tracepoint:syscalls:sys_exit_write
   $latency = elapsed - @write_start_time[tid];
 
   if (args->ret >= 0) {
-    printf("%llu { pid=%d tid=%d proc=%s } { EXIT write } { fd=%d fname=%s ret=%d req=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, @write_req_count[tid], $latency);
+    printf("%llu { pid=%d tid=%d proc=%s } { EX write } { fd=%d fname=%s ret=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, $latency);
   }
 
   delete(@write_fd[tid]);
-  delete(@write_req_count[tid]);
   delete(@write_start_time[tid]);
 }
 
@@ -334,10 +330,9 @@ tracepoint:syscalls:sys_enter_pread64
   $fname = @fname[pid, args->fd];
 
   @read_fd[tid] = args->fd;
-  @read_req_count[tid] = args->count;
   @read_start_time[tid] = elapsed;
 
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER pread64 } { fd=%d fname=%s count=%d pos=0x%08lx }\n", nsecs, pid, tid, comm, args->fd, $fname, args->count, args->pos);
+  printf("%llu { pid=%d tid=%d proc=%s } { EN pread64 } { fd=%d fname=%s count=%d }\n", nsecs, pid, tid, comm, args->fd, $fname, args->count);
 }
 
 tracepoint:syscalls:sys_exit_pread64
@@ -348,11 +343,10 @@ tracepoint:syscalls:sys_exit_pread64
   $latency = elapsed - @read_start_time[tid];
 
   if (args->ret >= 0) {
-    printf("%llu { pid=%d tid=%d proc=%s } { EXIT pread64 } { fd=%d fname=%s ret=%d req=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, @read_req_count[tid], $latency);
+    printf("%llu { pid=%d tid=%d proc=%s } { EX pread64 } { fd=%d fname=%s ret=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, $latency);
   }
 
   delete(@read_fd[tid]);
-  delete(@read_req_count[tid]);
   delete(@read_start_time[tid]);
 }
 
@@ -363,10 +357,9 @@ tracepoint:syscalls:sys_enter_pwrite64
   $fname = @fname[pid, args->fd];
 
   @write_fd[tid] = args->fd;
-  @write_req_count[tid] = args->count;
   @write_start_time[tid] = elapsed;
 
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER pwrite64 } { fd=%d fname=%s count=%d pos=0x%08lx }\n", nsecs, pid, tid, comm, args->fd, $fname, args->count, args->pos);
+  printf("%llu { pid=%d tid=%d proc=%s } { EN pwrite64 } { fd=%d fname=%s count=%d }\n", nsecs, pid, tid, comm, args->fd, $fname, args->count);
 }
 
 tracepoint:syscalls:sys_exit_pwrite64
@@ -377,11 +370,10 @@ tracepoint:syscalls:sys_exit_pwrite64
   $latency = elapsed - @write_start_time[tid];
 
   if (args->ret >= 0) {
-    printf("%llu { pid=%d tid=%d proc=%s } { EXIT pwrite64 } { fd=%d fname=%s ret=%d req=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, @write_req_count[tid], $latency);
+    printf("%llu { pid=%d tid=%d proc=%s } { EX pwrite64 } { fd=%d fname=%s ret=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, $latency);
   }
 
   delete(@write_fd[tid]);
-  delete(@write_req_count[tid]);
   delete(@write_start_time[tid]);
 }
 
@@ -394,7 +386,7 @@ tracepoint:syscalls:sys_enter_readv
   @read_fd[tid] = args->fd;
   @read_start_time[tid] = elapsed;
 
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER readv } { fd=%d fname=%s vlen=0x%08lx }\n", nsecs, pid, tid, comm, args->fd, $fname, args->vlen);
+  printf("%llu { pid=%d tid=%d proc=%s } { EN readv } { fd=%d fname=%s }\n", nsecs, pid, tid, comm, args->fd, $fname);
 }
 
 tracepoint:syscalls:sys_exit_readv
@@ -405,7 +397,7 @@ tracepoint:syscalls:sys_exit_readv
   $latency = elapsed - @read_start_time[tid];
 
   if (args->ret >= 0) {
-    printf("%llu { pid=%d tid=%d proc=%s } { EXIT readv } { fd=%d fname=%s ret=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, $latency);
+    printf("%llu { pid=%d tid=%d proc=%s } { EX readv } { fd=%d fname=%s ret=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, $latency);
   }
 
   delete(@read_fd[tid]);
@@ -421,7 +413,7 @@ tracepoint:syscalls:sys_enter_writev
   @write_fd[tid] = args->fd;
   @write_start_time[tid] = elapsed;
 
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER writev } { fd=%d fname=%s vlen=0x%08lx }\n", nsecs, pid, tid, comm, args->fd, $fname, args->vlen);
+  printf("%llu { pid=%d tid=%d proc=%s } { EN writev } { fd=%d fname=%s }\n", nsecs, pid, tid, comm, args->fd, $fname);
 }
 
 tracepoint:syscalls:sys_exit_writev
@@ -432,7 +424,7 @@ tracepoint:syscalls:sys_exit_writev
   $latency = elapsed - @write_start_time[tid];
 
   if (args->ret >= 0) {
-    printf("%llu { pid=%d tid=%d proc=%s } { EXIT writev } { fd=%d fname=%s ret=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, $latency);
+    printf("%llu { pid=%d tid=%d proc=%s } { EX writev } { fd=%d fname=%s ret=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, $latency);
   }
 
   delete(@write_fd[tid]);
@@ -448,7 +440,7 @@ tracepoint:syscalls:sys_enter_preadv
   @read_fd[tid] = args->fd;
   @read_start_time[tid] = elapsed;
 
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER preadv } { fd=%d fname=%s vlen=0x%08lx pos_l=0x%08lx pos_h=0x%08lx }\n", nsecs, pid, tid, comm, args->fd, $fname, args->vlen, args->pos_l, args->pos_h);
+  printf("%llu { pid=%d tid=%d proc=%s } { EN preadv } { fd=%d fname=%s }\n", nsecs, pid, tid, comm, args->fd, $fname);
 }
 
 tracepoint:syscalls:sys_exit_preadv
@@ -459,7 +451,7 @@ tracepoint:syscalls:sys_exit_preadv
   $latency = elapsed - @read_start_time[tid];
 
   if (args->ret >= 0) {
-    printf("%llu { pid=%d tid=%d proc=%s } { EXIT preadv } { fd=%d fname=%s ret=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, $latency);
+    printf("%llu { pid=%d tid=%d proc=%s } { EX preadv } { fd=%d fname=%s ret=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, $latency);
   }
 
   delete(@read_fd[tid]);
@@ -475,7 +467,7 @@ tracepoint:syscalls:sys_enter_pwritev
   @write_fd[tid] = args->fd;
   @write_start_time[tid] = elapsed;
 
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER pwritev } { fd=%d fname=%s vlen=0x%08lx pos_l=0x%08lx pos_h=0x%08lx }\n", nsecs, pid, tid, comm, args->fd, $fname, args->vlen, args->pos_l, args->pos_h);
+  printf("%llu { pid=%d tid=%d proc=%s } { EN pwritev } { fd=%d fname=%s }\n", nsecs, pid, tid, comm, args->fd, $fname);
 }
 
 tracepoint:syscalls:sys_exit_pwritev
@@ -486,7 +478,7 @@ tracepoint:syscalls:sys_exit_pwritev
   $latency = elapsed - @write_start_time[tid];
 
   if (args->ret >= 0) {
-    printf("%llu { pid=%d tid=%d proc=%s } { EXIT pwritev } { fd=%d fname=%s ret=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, $latency);
+    printf("%llu { pid=%d tid=%d proc=%s } { EX pwritev } { fd=%d fname=%s ret=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, $latency);
   }
 
   delete(@write_fd[tid]);
@@ -504,7 +496,7 @@ tracepoint:syscalls:sys_enter_mmap
   @mmap_len[tid] = args->len;
   @mmap_start_time[tid] = elapsed;
 
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER mmap } { fd=%d fname=%s addr=0x%lx len=%lu prot=0x%x flags=0x%x off: 0x%081x }\n", nsecs, pid, tid, comm, args->fd, $fname, args->addr, args->len, args->prot, args->flags, args->off);
+  printf("%llu { pid=%d tid=%d proc=%s } { EN mmap } { fd=%d fname=%s addr=0x%lx len=%lu prot=0x%x flags=0x%x off: 0x%081x }\n", nsecs, pid, tid, comm, args->fd, $fname, args->addr, args->len, args->prot, args->flags, args->off);
 }
 
 tracepoint:syscalls:sys_exit_mmap
@@ -516,7 +508,7 @@ tracepoint:syscalls:sys_exit_mmap
   $latency = elapsed - @mmap_start_time[tid];
 
   if (args->ret >= 0) {
-    printf("%llu { pid=%d tid=%d proc=%s } { EXIT mmap } { fd=%d fname=%s ret=0x%lx len=%llu latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, $len, $latency);
+    printf("%llu { pid=%d tid=%d proc=%s } { EX mmap } { fd=%d fname=%s ret=0x%lx len=%llu latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, $len, $latency);
   }
 
   delete(@mmap_fd[tid]);
@@ -528,13 +520,13 @@ tracepoint:syscalls:sys_exit_mmap
 kfunc:vfs_read 
 / @tracked[pid] /
 {
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER vfs_read } { file=%s count=%d }\n", nsecs, pid, tid, comm, str(args->file->f_path.dentry->d_name.name), args->count);
+  printf("%llu { pid=%d tid=%d proc=%s } { EN vfs_read } { file=%s }\n", nsecs, pid, tid, comm, str(args->file->f_path.dentry->d_name.name));
 }
 
 kfunc:vfs_write
 / @tracked[pid] /
 {
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER vfs_write } { file=%s count=%d }\n", nsecs, pid, tid, comm, str(args->file->f_path.dentry->d_name.name), args->count);
+  printf("%llu { pid=%d tid=%d proc=%s } { EN vfs_write } { file=%s }\n", nsecs, pid, tid, comm, str(args->file->f_path.dentry->d_name.name));
 }
 
 /* close enter + exit */
@@ -542,7 +534,7 @@ tracepoint:syscalls:sys_enter_close
 / @tracked[pid] /
 {
   $fname = @fname[pid, args->fd];
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER close } { fd=%d fname=%s }\n", nsecs, pid, tid, comm, args->fd, $fname);
+  printf("%llu { pid=%d tid=%d proc=%s } { EN close } { fd=%d fname=%s }\n", nsecs, pid, tid, comm, args->fd, $fname);
   @close_fd[tid] = args->fd;
 }
 
@@ -553,7 +545,7 @@ tracepoint:syscalls:sys_exit_close
   $fname = @fname[pid, $fd];
 
   if (args->ret >= 0) {
-    printf("%llu { pid=%d tid=%d proc=%s } { EXIT close } { fd=%d fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret);
+    printf("%llu { pid=%d tid=%d proc=%s } { EX close } { fd=%d fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret);
   }
   
   delete(@close_fd[tid]);
