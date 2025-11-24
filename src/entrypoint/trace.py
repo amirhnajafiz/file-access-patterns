@@ -42,7 +42,6 @@ def ensure_script(path):
 
 def main():
     global GOUTPUT_PATH
-    os.environ['BPFTRACE_MAX_STRLEN'] = str(100)
 
     parser = argparse.ArgumentParser(
         description="Traces all file access events of a command and its sub-processes, "
@@ -57,9 +56,11 @@ def main():
 
     parser.add_argument("-cgcmd", help="Filter based on a command in cgroup tracing (only works with -cg)")
     parser.add_argument("-o", "--out", default="logs", help="Folder path to export the tracing logs (default: logs)")
+    parser.add_argument("-mxs", "--max_str", default="64", help="bpf MAX_STRLEN in bytes (default: 64)")
 
     args = parser.parse_args()
     GOUTPUT_PATH = args.out
+    os.environ['BPFTRACE_MAX_STRLEN'] = args.max_str
 
     # check if bpftrace is available
     if shutil.which("bpftrace") is None:

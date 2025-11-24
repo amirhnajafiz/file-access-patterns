@@ -37,7 +37,6 @@ signal.signal(signal.SIGTERM, handle_shutdown)
 
 def main():
     global GOUTPUT_PATH
-    os.environ['BPFTRACE_MAX_STRLEN'] = str(100)
 
     parser = argparse.ArgumentParser(
         description="Bootstraps a tracing session for a pod/container. "
@@ -50,9 +49,11 @@ def main():
     parser.add_argument("-ns", "--namespace", required=True, help="Kubernetes namespace")
     parser.add_argument("-cmd", "--command", help="Command to execute inside the container")
     parser.add_argument("-o", "--output", default="logs", help="Folder path to export the tracing logs")
+    parser.add_argument("-mxs", "--max_str", default="64", help="bpf MAX_STRLEN in bytes (default: 64)")
 
     args = parser.parse_args()
     GOUTPUT_PATH = args.output
+    os.environ['BPFTRACE_MAX_STRLEN'] = args.max_str
     
     container_name = args.container
     pod_name = args.pod
