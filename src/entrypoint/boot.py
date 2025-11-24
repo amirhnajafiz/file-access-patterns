@@ -37,6 +37,7 @@ signal.signal(signal.SIGTERM, handle_shutdown)
 
 def main():
     global GOUTPUT_PATH
+    os.environ['BPFTRACE_MAX_STRLEN'] = 1024
 
     parser = argparse.ArgumentParser(
         description="Bootstraps a tracing session for a pod/container. "

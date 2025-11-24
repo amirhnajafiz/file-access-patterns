@@ -42,6 +42,7 @@ def ensure_script(path):
 
 def main():
     global GOUTPUT_PATH
+    os.environ['BPFTRACE_MAX_STRLEN'] = 1024
 
     parser = argparse.ArgumentParser(
         description="Traces all file access events of a command and its sub-processes, "
