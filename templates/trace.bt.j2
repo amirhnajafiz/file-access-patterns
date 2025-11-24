@@ -489,13 +489,13 @@ tracepoint:syscalls:sys_exit_mmap
 kprobe:vfs_read 
 {{ filter }}
 {
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER vfs_read } { file=%s count=%d }\n", pid, tid, comm, str(args->filename), args->count);
+  printf("%llu { pid=%d tid=%d proc=%s } { ENTER vfs_read } { file=%s count=%d }\n", pid, tid, comm, str(file->f_path.dentry->d_name.name), count);
 }
 
 kprobe:vfs_write
 {{ filter }}
 {
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER vfs_write } { file=%s count=%d }\n", pid, tid, comm, str(args->filename), args->count);
+  printf("%llu { pid=%d tid=%d proc=%s } { ENTER vfs_write } { file=%s count=%d }\n", pid, tid, comm, str(file->f_path.dentry->d_name.name), count);
 }
 
 /* close enter + exit */
