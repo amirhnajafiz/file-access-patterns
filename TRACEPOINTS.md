@@ -13,6 +13,7 @@ FLAP relies on the following tracepoints. Among them, only the cgroup tracers do
 - preadv: Reads data from a file descriptor at a specific offset into multiple buffers.
 - pwritev: Writes data to a file descriptor at a specific offset from multiple buffers.
 - mmap: Maps files or devices into memory, providing a pointer to the mapped area.
+- page_fault_user: Throws an exception to get a page when it's not found.
 - close: Closes an open file descriptor, freeing associated resources.
 
 ## Metadata Extraction Syscalls
