@@ -476,12 +476,25 @@ tracepoint:syscalls:sys_exit_mmap
   $latency = elapsed - @mmap_start_time[tid];
 
   if (args->ret >= 0) {
-    printf("%llu { pid=%d tid=%d proc=%s } { EXIT mmap } { fd=%d fname=%s ret=%d len=%llu latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, $len, $latency);
+    printf("%llu { pid=%d tid=%d proc=%s } { EXIT mmap } { fd=%d fname=%s ret=0x%lx len=%llu latency=%llu }\n", nsecs, pid, tid, comm, $fd, $fname, args->ret, $len, $latency);
   }
 
   delete(@mmap_fd[tid]);
   delete(@mmap_len[tid]);
   delete(@mmap_start_time[tid]);
+}
+
+/* vfs read + write */
+kprobe:vfs_read 
+/ cgroup == @tracked_cgid /
+{
+  printf("%llu { pid=%d tid=%d proc=%s } { ENTER vfs_read } { file=%s count=%d }\n", pid, tid, comm, str(args->filename), args->count);
+}
+
+kprobe:vfs_write
+/ cgroup == @tracked_cgid /
+{
+  printf("%llu { pid=%d tid=%d proc=%s } { ENTER vfs_write } { file=%s count=%d }\n", pid, tid, comm, str(args->filename), args->count);
 }
 
 /* close enter + exit */
