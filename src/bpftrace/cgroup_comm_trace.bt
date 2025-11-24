@@ -489,13 +489,13 @@ tracepoint:syscalls:sys_exit_mmap
 kprobe:vfs_read 
 / cgroup == @tracked_cgid && comm == @tracked_comm /
 {
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER vfs_read } { file=%s count=%d }\n", pid, tid, comm, str(file->f_path.dentry->d_name.name), count);
+  printf("%llu { pid=%d tid=%d proc=%s } { ENTER vfs_read } { file=%s }\n", pid, tid, comm, str(file->f_path.dentry->d_name.name));
 }
 
 kprobe:vfs_write
 / cgroup == @tracked_cgid && comm == @tracked_comm /
 {
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER vfs_write } { file=%s count=%d }\n", pid, tid, comm, str(file->f_path.dentry->d_name.name), count);
+  printf("%llu { pid=%d tid=%d proc=%s } { ENTER vfs_write } { file=%s }\n", pid, tid, comm, str(file->f_path.dentry->d_name.name));
 }
 
 /* close enter + exit */
