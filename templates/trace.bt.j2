@@ -486,16 +486,16 @@ tracepoint:syscalls:sys_exit_mmap
 }
 
 /* vfs read + write */
-kprobe:vfs_read 
+kfunc:vfs_read 
 {{ filter }}
 {
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER vfs_read } { file=%s }\n", pid, tid, comm, str(file->f_path.dentry->d_name.name));
+  printf("%llu { pid=%d tid=%d proc=%s } { ENTER vfs_read } { file=%s count=%d }\n", pid, tid, comm, str(args->file->f_path.dentry->d_name.name), args->count);
 }
 
-kprobe:vfs_write
+kfunc:vfs_write
 {{ filter }}
 {
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER vfs_write } { file=%s }\n", pid, tid, comm, str(file->f_path.dentry->d_name.name));
+  printf("%llu { pid=%d tid=%d proc=%s } { ENTER vfs_write } { file=%s count=%d }\n", pid, tid, comm, str(args->file->f_path.dentry->d_name.name), args->count);
 }
 
 /* close enter + exit */
