@@ -525,13 +525,13 @@ tracepoint:syscalls:sys_exit_mmap
 kfunc:vfs_read 
 / @tracked[pid] /
 {
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER vfs_read } { file=%s count=%d }\n", pid, tid, comm, str(args->file->f_path.dentry->d_name.name), args->count);
+  printf("%llu { pid=%d tid=%d proc=%s } { ENTER vfs_read } { file=%s count=%d }\n", nsecs, pid, tid, comm, str(args->file->f_path.dentry->d_name.name), args->count);
 }
 
 kfunc:vfs_write
 / @tracked[pid] /
 {
-  printf("%llu { pid=%d tid=%d proc=%s } { ENTER vfs_write } { file=%s count=%d }\n", pid, tid, comm, str(args->file->f_path.dentry->d_name.name), args->count);
+  printf("%llu { pid=%d tid=%d proc=%s } { ENTER vfs_write } { file=%s count=%d }\n", nsecs, pid, tid, comm, str(args->file->f_path.dentry->d_name.name), args->count);
 }
 
 /* close enter + exit */
