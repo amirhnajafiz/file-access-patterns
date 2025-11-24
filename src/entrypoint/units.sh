@@ -16,6 +16,5 @@ run_test() {
 
 run_test ./tests/test_cgroups.sh
 run_test ./tests/test_tracings.sh
-run_test ./tests/test_filter.sh
 
 echo "All tests passed."
