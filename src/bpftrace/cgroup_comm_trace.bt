@@ -486,6 +486,7 @@ tracepoint:syscalls:sys_exit_mmap
 }
 
 /* vfs read + write */
+/*
 kfunc:vfs_read 
 / cgroup == @tracked_cgid && comm == @tracked_comm /
 {
@@ -497,6 +498,7 @@ kfunc:vfs_write
 {
   printf("%llu { pid=%d tid=%d proc=%s } { ENTER vfs_write } { file=%s count=%d }\n", nsecs, pid, tid, comm, str(args->file->f_path.dentry->d_name.name), args->count);
 }
+*/
 
 /* close enter + exit */
 tracepoint:syscalls:sys_enter_close
