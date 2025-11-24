@@ -477,21 +477,6 @@ tracepoint:syscalls:sys_exit_mmap
   delete(@mmap_start_time[tid]);
 }
 
-/* vfs read + write */
-/*
-kfunc:vfs_read 
-{{ filter }}
-{
-  printf("%llu { pid=%d tid=%d proc=%s } { EN vfs_read } { file=%s }\n", nsecs, pid, tid, comm, str(args->file->f_path.dentry->d_name.name));
-}
-
-kfunc:vfs_write
-{{ filter }}
-{
-  printf("%llu { pid=%d tid=%d proc=%s } { EN vfs_write } { file=%s }\n", nsecs, pid, tid, comm, str(args->file->f_path.dentry->d_name.name));
-}
-*/
-
 /* page fault user */
 tracepoint:exceptions:page_fault_user
 {{ filter }}
@@ -520,3 +505,17 @@ tracepoint:syscalls:sys_exit_close
   
   delete(@close_fd[tid]);
 }
+{% if enable_kfuncs %}
+/* vfs read + write */
+kfunc:vfs_read 
+{{ filter }}
+{
+  printf("%llu { pid=%d tid=%d proc=%s } { EN vfs_read } { file=%s }\n", nsecs, pid, tid, comm, str(args->file->f_path.dentry->d_name.name));
+}
+
+kfunc:vfs_write
+{{ filter }}
+{
+  printf("%llu { pid=%d tid=%d proc=%s } { EN vfs_write } { file=%s }\n", nsecs, pid, tid, comm, str(args->file->f_path.dentry->d_name.name));
+}
+{% endif %}

@@ -54,7 +54,8 @@ if __name__ == "__main__":
             file_name=entry["file_name"],
             usage_cmd=entry["usage_cmd"],
             enable_subprocess=entry["enable_subprocess"],
-            subprocess=read_to_str(entry["subprocess"])
+            subprocess=read_to_str(entry["subprocess"]),
+            enable_kfuncs=entry["enable_kfuncs"]
         )
         
         save_template(entry["out"], out)
