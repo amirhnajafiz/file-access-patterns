@@ -52,7 +52,7 @@ def main():
     parser.add_argument("-o", "--output", default="logs", help="Folder path to export the tracing logs")
 
     args = parser.parse_args()
-    GOUTPUT_PATH = args.out
+    GOUTPUT_PATH = args.output
     
     container_name = args.container
     pod_name = args.pod
