@@ -13,7 +13,7 @@ pattern = re.compile(
     r"""^\s*
     (?P<timestamp>\d+)\s+
     \{\s*pid=(?P<pid>\d+)\s+tid=(?P<tid>\d+)\s+proc=(?P<proc>[^\s]+)\s*\}\s+
-    \{\s*(?P<etype>ENTER|EXIT)\s+(?P<operand>[^\s]+)\s*\}\s+
+    \{\s*(?P<etype>EN|EX)\s+(?P<operand>[^\s]+)\s*\}\s+
     \{\s*(?P<kv>.*?)\s*\}
     """,
     re.VERBOSE,
