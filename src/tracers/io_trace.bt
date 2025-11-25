@@ -33,7 +33,7 @@ tracepoint:syscalls:sys_enter_write
 tracepoint:syscalls:sys_exit_write
 / cgroup == @tracked_cgid /
 {
-  printf("%llu {pid=%d tid=%d proc=%s}{EX write}{fd=%d fname=%s ret=%d}\n", nsecs, pid, tid, comm, args->ret);
+  printf("%llu {pid=%d tid=%d proc=%s}{EX write}{ret=%d}\n", nsecs, pid, tid, comm, args->ret);
 }
 
 /* pread64 enter + exit */
