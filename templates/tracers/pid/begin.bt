@@ -1,0 +1,50 @@
+#!/usr/bin/env bpftrace
+// file: src/bpftrace/pid_trace.bt
+// usage: sudo bpftrace -o /tmp/tracing.out pid_trace.bt <PID>
+// log format: [timestamp] { pid=[pid] tid=[tid] proc=[command] } { [EN|EX] [operand] } { [key=value] }
+
+BEGIN
+{
+  @fname[$1, 0] = "STDIN";
+  @fname[$1, 1] = "STDOUT";
+  @fname[$1, 2] = "STDERR";
+  @tracked[$1] = 1;
+  printf("%s START tracing file-access events for PID %llu\n", strftime("%Y-%m-%d %H:%M:%S", nsecs), $1);
+}
+
+/* ----- Child Process Tracing ----- */
+/* when we see a fork, if parent is tracked then also track child */
+tracepoint:sched:sched_process_fork
+/ @tracked[args->parent_pid] /
+{
+  printf("%llu { pid=%d tid=%d proc=%s } { ENTER fork } { pid=%d comm=%s }\n", nsecs, args->parent_pid, tid, args->parent_comm, args->child_pid, args->child_comm);
+
+  @fname[pid, 0] = "STDIN";
+  @fname[pid, 1] = "STDOUT";
+  @fname[pid, 2] = "STDERR";
+  @tracked[args->child_pid] = 1;
+}
+
+/* when exec happens, if old_pid tracked ensure that the new pid is also tracked */
+tracepoint:sched:sched_process_exec
+/ @tracked[args->old_pid] /
+{
+  printf("%llu { pid=%d tid=%d proc=%s } { ENTER exec } { pid=%d fname=%s }\n", nsecs, args->old_pid, tid, comm, args->pid, str(args->filename));
+
+  @fname[pid, 0] = "STDIN";
+  @fname[pid, 1] = "STDOUT";
+  @fname[pid, 2] = "STDERR";
+  @tracked[args->pid] = 1;
+}
+
+/* cleanup process fname table and untrack process */
+tracepoint:sched:sched_process_exit
+/ @tracked[pid] /
+{
+  printf("%llu { pid=%d tid=%d proc=%s } { EXIT process } { }\n", nsecs, pid, tid, comm);
+
+  delete(@fname[pid, 0]);
+  delete(@fname[pid, 1]);
+  delete(@fname[pid, 2]);
+  delete(@tracked[pid]);
+}

@@ -1,5 +1,0 @@
-@fname[$1, 0] = "STDIN";
-@fname[$1, 1] = "STDOUT";
-@fname[$1, 2] = "STDERR";
-@tracked[$1] = 1;
-printf("%s START tracing file-access events for PID %llu\n", strftime("%Y-%m-%d %H:%M:%S", nsecs), $1);

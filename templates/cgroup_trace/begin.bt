@@ -1,2 +1,0 @@
-@tracked_cgid = (uint64)$1;
-printf("%s START tracing file-access events for CGROUP ID %llu\n", strftime("%Y-%m-%d %H:%M:%S", nsecs), $1);
