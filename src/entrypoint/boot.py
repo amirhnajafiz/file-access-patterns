@@ -44,6 +44,7 @@ def main():
                     "Optional: --command, --output."
     )
 
+    parser.add_argument("-f", "--file", required=True, help="bpftrace file")
     parser.add_argument("-c", "--container", required=True, help="Container name or ID")
     parser.add_argument("-p", "--pod", required=True, help="Pod name or ID")
     parser.add_argument("-ns", "--namespace", required=True, help="Kubernetes namespace")
@@ -144,7 +145,7 @@ def main():
     if command:
         tracer_args = ["bpftrace", "-o", log_out, "bpftrace/cgroup_comm_trace.bt", cgroupid, command]
     else:
-        tracer_args = ["bpftrace", "-o", log_out, "bpftrace/cgroup_trace.bt", cgroupid]
+        tracer_args = ["bpftrace", "-o", log_out, f"tracers/{args.file}.bt", cgroupid]
 
     rc = subprocess.call(tracer_args)
     handle_shutdown(None, None)
