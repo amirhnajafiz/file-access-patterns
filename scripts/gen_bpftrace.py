@@ -45,6 +45,8 @@ if __name__ == "__main__":
     # load the configs
     cfg = import_json(CONFIG_PATH)
 
+    print(f"loading {CONFIG_PATH} ...")
+
     # form the template paths
     templates_dir_path = os.path.join(cfg["templates_dir"], cfg["sources_dir"])
 
@@ -76,3 +78,5 @@ if __name__ == "__main__":
             )
         
             save_template(output_path , res)
+
+    print("scripts generated successfully.")

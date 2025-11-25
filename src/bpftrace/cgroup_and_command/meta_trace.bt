@@ -1,13 +1,12 @@
 #!/usr/bin/env bpftrace
-// file: src/bpftrace/cgroup_comm_trace.bt
-// usage: sudo bpftrace -o /tmp/tracing.out cgroup_comm_trace.bt <CGROUP_ID> <NAME>
-// log format: [timestamp] { pid=[pid] tid=[tid] proc=[command] } { [EN|EX] [operand] } { [key=value] }
+// dir: src/bpftrace/cgroup_and_command
+// log format: [timestamp] {pid=[pid] tid=[tid] proc=[command]}{[EN|EX] [operand]} {[key=value]}
 
 BEGIN
 {
   @tracked_cgid = (uint64)$1;
   @tracked_comm = str($2);
-  printf("%s START tracing file-access events for CGROUP ID %llu on %s\n", strftime("%Y-%m-%d %H:%M:%S", nsecs), $1, str($2));
+  printf("%s START tracing events for CGROUP ID %llu (filter command: %s)\n", strftime("%Y-%m-%d %H:%M:%S", nsecs), $1, str($2));
 }
 
 /* creat enter + exit */

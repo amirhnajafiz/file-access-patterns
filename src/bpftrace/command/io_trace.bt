@@ -1,12 +1,11 @@
 #!/usr/bin/env bpftrace
-// file: src/bpftrace/comm_trace.bt
-// usage: sudo bpftrace -o /tmp/tracing.out comm_trace.bt <NAME>
-// log format: [timestamp] { pid=[pid] tid=[tid] proc=[command] } { [EN|EX] [operand] } { [key=value] }
+// dir: src/bpftrace/command
+// log format: [timestamp] {pid=[pid] tid=[tid] proc=[command]}{[EN|EX] [operand]} {[key=value]}
 
 BEGIN
 {
   @tracked_comm = str($1);
-  printf("%s START tracing file-access events for %s\n", strftime("%Y-%m-%d %H:%M:%S", nsecs), str($1));
+  printf("%s START tracing events (filter command: %s)\n", strftime("%Y-%m-%d %H:%M:%S", nsecs), str($1));
 }
 
 /* ----- Child Process Tracing ----- */

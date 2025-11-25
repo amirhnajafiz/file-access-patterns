@@ -1,7 +1,6 @@
 #!/usr/bin/env bpftrace
-// file: src/bpftrace/cmd_trace.bt
-// usage: sudo bpftrace -c "./myapp arg1 arg2" -o /tmp/tracing.out cmd_trace.bt
-// log format: [timestamp] { pid=[pid] tid=[tid] proc=[command] } { [EN|EX] [operand] } { [key=value] }
+// dir: src/bpftrace/execute
+// log format: [timestamp] {pid=[pid] tid=[tid] proc=[command]}{[EN|EX] [operand]} {[key=value]}
 
 BEGIN
 {
@@ -9,7 +8,7 @@ BEGIN
   @fname[cpid, 1] = "STDOUT";
   @fname[cpid, 2] = "STDERR";
   @tracked[cpid] = 1;
-  printf("%s START tracing file-access events for CPID %llu\n", strftime("%Y-%m-%d %H:%M:%S", nsecs), cpid);
+  printf("%s START tracing events for CPID %llu\n", strftime("%Y-%m-%d %H:%M:%S", nsecs), cpid);
 }
 
 /* ----- Child Process Tracing ----- */
