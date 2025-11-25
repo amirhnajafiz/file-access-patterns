@@ -10,6 +10,7 @@ def termination_hook(signum, _):
 
 
 def start_new_tracer(bt_command: str) -> int:
+    """start a new tracer by accepting the init command."""
     rc = subprocess.call(bt_command)
     if rc != 0:
         print(f"bpftrace exited with code {rc}", file=sys.stderr)
