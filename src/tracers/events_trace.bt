@@ -13,5 +13,19 @@ BEGIN
 tracepoint:exceptions:page_fault_user
 / cgroup == @tracked_cgid /
 {
-  printf("%llu { pid=%d tid=%d proc=%s } { EN page_fault_user } { addr=%lu }\n", nsecs, pid, tid, comm, args->address); 
+  @fault_start[tid] = 1;
+  printf("%llu {pid=%d tid=%d proc=%s}{EN page_fault_user}{addr=%lu}\n", nsecs, pid, tid, comm, args->address); 
+}
+
+kprobe:handle_mm_fault
+/ @fault_start[tid] /
+{
+  printf("%llu {pid=%d tid=%d proc=%s}{EN handle_mm_fault}{}\n", nsecs, pid, tid, comm);
+}
+
+kretprobe:handle_mm_fault
+/ @fault_start[tid] /
+{
+  printf("%llu {pid=%d tid=%d proc=%s}{EX handle_mm_fault}{}\n", nsecs, pid, tid, comm);
+  delete(@fault_start[tid]);
 }
