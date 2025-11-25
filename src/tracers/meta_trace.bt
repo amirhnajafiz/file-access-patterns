@@ -1,0 +1,187 @@
+#!/usr/bin/env bpftrace
+// file: src/bpftrace/cgroup_trace.bt
+// usage: sudo bpftrace -o /tmp/tracing.out cgroup_trace.bt <CGROUP_ID>
+// log format: [timestamp] { pid=[pid] tid=[tid] proc=[command] } { [EN|EX] [operand] } { [key=value] }
+
+BEGIN
+{
+  @tracked_cgid = (uint64)$1;
+  printf("%s START tracing file-access events for CGROUP ID %llu\n", strftime("%Y-%m-%d %H:%M:%S", nsecs), $1);
+}
+
+// ----- Metadata Extraction Syscalls -----
+/* creat enter + exit */
+tracepoint:syscalls:sys_enter_creat
+/ cgroup == @tracked_cgid /
+{
+  printf("%llu { pid=%d tid=%d proc=%s } { EN creat } { fname=%s }\n", nsecs, pid, tid, comm, str(args->pathname));
+  @open_fname[tid] = args->pathname;
+}
+
+tracepoint:syscalls:sys_exit_creat
+/ cgroup == @tracked_cgid /
+{
+  $fname = str(@open_fname[tid]);
+  printf("%llu { pid=%d tid=%d proc=%s } { EX creat } { fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fname, args->ret);
+  delete(@open_fname[tid]);
+}
+
+/* open enter + exit */
+tracepoint:syscalls:sys_enter_open
+/ cgroup == @tracked_cgid /
+{
+  printf("%llu { pid=%d tid=%d proc=%s } { EN open } { fname=%s }\n", nsecs, pid, tid, comm, str(args->filename));
+  @open_fname[tid] = args->filename;
+}
+
+tracepoint:syscalls:sys_exit_open
+/ cgroup == @tracked_cgid /
+{
+  $fname = str(@open_fname[tid]);
+  printf("%llu { pid=%d tid=%d proc=%s } { EX open } { fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fname, args->ret);
+  delete(@open_fname[tid]);
+}
+
+/* openat enter + exit */
+tracepoint:syscalls:sys_enter_openat
+/ cgroup == @tracked_cgid /
+{
+  printf("%llu { pid=%d tid=%d proc=%s } { EN openat } { fname=%s }\n", nsecs, pid, tid, comm, str(args->filename));
+  @open_fname[tid] = args->filename;
+}
+
+tracepoint:syscalls:sys_exit_openat
+/ cgroup == @tracked_cgid /
+{
+  $fname = str(@open_fname[tid]);
+  printf("%llu { pid=%d tid=%d proc=%s } { EX openat } { fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fname, args->ret);
+  delete(@open_fname[tid]);
+}
+
+/* dup enter + exit */
+tracepoint:syscalls:sys_enter_dup
+/ cgroup == @tracked_cgid /
+{
+  printf("%llu { pid=%d tid=%d proc=%s } { EN dup } { }\n", nsecs, pid, tid, comm);
+  @dup_fd[tid] = args->fildes;
+}
+
+tracepoint:syscalls:sys_exit_dup
+/ cgroup == @tracked_cgid /
+{
+  $fd = @dup_fd[tid];
+  printf("%llu { pid=%d tid=%d proc=%s } { EX dup } { ret=%d }\n", nsecs, pid, tid, comm, args->ret);
+  delete(@dup_fd[tid]);
+}
+
+/* dup2 enter + exit */
+tracepoint:syscalls:sys_enter_dup2
+/ cgroup == @tracked_cgid /
+{
+  printf("%llu { pid=%d tid=%d proc=%s } { EN dup2 } { }\n", nsecs, pid, tid, comm);
+  @dup_fd[tid] = args->oldfd;
+}
+
+tracepoint:syscalls:sys_exit_dup2
+/ cgroup == @tracked_cgid /
+{
+  $fd = @dup_fd[tid];
+  printf("%llu { pid=%d tid=%d proc=%s } { EX dup2 } { ret=%d }\n", nsecs, pid, tid, comm, args->ret);
+  delete(@dup_fd[tid]);
+}
+
+/* dup3 enter + exit */
+tracepoint:syscalls:sys_enter_dup3
+/ cgroup == @tracked_cgid /
+{
+  printf("%llu { pid=%d tid=%d proc=%s } { EN dup3 } { }\n", nsecs, pid, tid, comm);
+  @dup_fd[tid] = args->oldfd;
+}
+
+tracepoint:syscalls:sys_exit_dup3
+/ cgroup == @tracked_cgid /
+{
+  $fd = @dup_fd[tid];
+  printf("%llu { pid=%d tid=%d proc=%s } { EX dup3 } { ret=%d }\n", nsecs, pid, tid, comm, args->ret);
+  delete(@dup_fd[tid]);
+}
+
+/* statfs enter + exit */
+tracepoint:syscalls:sys_enter_statfs
+/ cgroup == @tracked_cgid /
+{
+  printf("%llu { pid=%d tid=%d proc=%s } { EN statfs } { fname=%s }\n", nsecs, pid, tid, comm, str(args->pathname));
+  @stats_path[tid] = args->pathname;
+}
+
+tracepoint:syscalls:sys_exit_statfs
+/ cgroup == @tracked_cgid /
+{
+  $fname = str(@stats_path[tid]);
+  printf("%llu { pid=%d tid=%d proc=%s } { EX statfs } { fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fname, args->ret);
+  delete(@stats_path[tid]);
+}
+
+/* statx enter + exit */
+tracepoint:syscalls:sys_enter_statx
+/ cgroup == @tracked_cgid /
+{
+  printf("%llu { pid=%d tid=%d proc=%s } { EN statx } { fname=%s }\n", nsecs, pid, tid, comm, str(args->filename));
+  @stats_path[tid] = args->filename;
+}
+
+tracepoint:syscalls:sys_exit_statx
+/ cgroup == @tracked_cgid /
+{
+  $fname = str(@stats_path[tid]);
+  printf("%llu { pid=%d tid=%d proc=%s } { EX statx } { fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fname, args->ret);
+  delete(@stats_path[tid]);
+}
+
+/* newstat enter + exit */
+tracepoint:syscalls:sys_enter_newstat
+/ cgroup == @tracked_cgid /
+{
+  printf("%llu { pid=%d tid=%d proc=%s } { EN newstat } { fname=%s }\n", nsecs, pid, tid, comm, str(args->filename));
+  @stats_path[tid] = args->filename;
+}
+
+tracepoint:syscalls:sys_exit_newstat
+/ cgroup == @tracked_cgid /
+{
+  $fname = str(@stats_path[tid]);
+  printf("%llu { pid=%d tid=%d proc=%s } { EX newstat } { fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fname, args->ret);
+  delete(@stats_path[tid]);
+}
+
+/* newlstat enter + exit */
+tracepoint:syscalls:sys_enter_newlstat
+/ cgroup == @tracked_cgid /
+{
+  printf("%llu { pid=%d tid=%d proc=%s } { EN newlstat } { fname=%s }\n", nsecs, pid, tid, comm, str(args->filename));
+  @stats_path[tid] = args->filename;
+}
+
+tracepoint:syscalls:sys_exit_newlstat
+/ cgroup == @tracked_cgid /
+{
+  $fname = str(@stats_path[tid]);
+  printf("%llu { pid=%d tid=%d proc=%s } { EX newlstat } { fname=%s ret=%d }\n", nsecs, pid, tid, comm, $fname, args->ret);
+  delete(@stats_path[tid]);
+}
+
+/* close enter + exit */
+tracepoint:syscalls:sys_enter_close
+/ cgroup == @tracked_cgid /
+{
+  printf("%llu { pid=%d tid=%d proc=%s } { EN close } { fd=%d }\n", nsecs, pid, tid, comm, args->fd);
+  @close_fd[tid] = args->fd;
+}
+
+tracepoint:syscalls:sys_exit_close
+/ cgroup == @tracked_cgid /
+{
+  $fd = @close_fd[tid];
+  printf("%llu { pid=%d tid=%d proc=%s } { EX close } { fd=%d ret=%d }\n", nsecs, pid, tid, comm, $fd, args->ret);
+  delete(@close_fd[tid]);
+}

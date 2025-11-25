@@ -1,0 +1,213 @@
+#!/usr/bin/env bpftrace
+// file: src/bpftrace/cgroup_comm_trace.bt
+// usage: sudo bpftrace -o /tmp/tracing.out cgroup_comm_trace.bt <CGROUP_ID> <NAME>
+// log format: [timestamp] { pid=[pid] tid=[tid] proc=[command] } { [EN|EX] [operand] } { [key=value] }
+
+BEGIN
+{
+  @tracked_cgid = (uint64)$1;
+  @tracked_comm = str($2);
+  printf("%s START tracing file-access events for CGROUP ID %llu on %s\n", strftime("%Y-%m-%d %H:%M:%S", nsecs), $1, str($2));
+}
+
+// ----- I/O Operation Syscalls -----
+/* read enter + exit */
+tracepoint:syscalls:sys_enter_read
+/ cgroup == @tracked_cgid /
+{
+  @read_fd[tid] = args->fd;
+  @read_start_time[tid] = elapsed;
+
+  printf("%llu { pid=%d tid=%d proc=%s } { EN read } { fd=%d count=%d }\n", nsecs, pid, tid, comm, args->fd, args->count);
+}
+
+tracepoint:syscalls:sys_exit_read
+/ cgroup == @tracked_cgid /
+{
+  $fd = @read_fd[tid];
+  $latency = elapsed - @read_start_time[tid];
+
+  printf("%llu { pid=%d tid=%d proc=%s } { EX read } { fd=%d ret=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, args->ret, $latency);
+
+  delete(@read_fd[tid]);
+  delete(@read_start_time[tid]);
+}
+
+/* write enter + exit */
+tracepoint:syscalls:sys_enter_write
+/ cgroup == @tracked_cgid /
+{
+  @write_fd[tid] = args->fd;
+  @write_start_time[tid] = elapsed;
+
+  printf("%llu { pid=%d tid=%d proc=%s } { EN write } { fd=%d count=%d }\n", nsecs, pid, tid, comm, args->fd, args->count);
+}
+
+tracepoint:syscalls:sys_exit_write
+/ cgroup == @tracked_cgid /
+{
+  $fd = @write_fd[tid];
+  $latency = elapsed - @write_start_time[tid];
+
+  printf("%llu { pid=%d tid=%d proc=%s } { EX write } { fd=%d fname=%s ret=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, args->ret, $latency);
+
+  delete(@write_fd[tid]);
+  delete(@write_start_time[tid]);
+}
+
+/* pread64 enter + exit */
+tracepoint:syscalls:sys_enter_pread64
+/ cgroup == @tracked_cgid /
+{
+  @read_fd[tid] = args->fd;
+  @read_start_time[tid] = elapsed;
+
+  printf("%llu { pid=%d tid=%d proc=%s } { EN pread64 } { fd=%d count=%d }\n", nsecs, pid, tid, comm, args->fd, args->count);
+}
+
+tracepoint:syscalls:sys_exit_pread64
+/ cgroup == @tracked_cgid /
+{
+  $fd = @read_fd[tid];
+  $latency = elapsed - @read_start_time[tid];
+
+  printf("%llu { pid=%d tid=%d proc=%s } { EX pread64 } { fd=%d ret=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, args->ret, $latency);
+
+  delete(@read_fd[tid]);
+  delete(@read_start_time[tid]);
+}
+
+/* pwrite64 enter + exit */
+tracepoint:syscalls:sys_enter_pwrite64
+/ cgroup == @tracked_cgid /
+{
+  @write_fd[tid] = args->fd;
+  @write_start_time[tid] = elapsed;
+
+  printf("%llu { pid=%d tid=%d proc=%s } { EN pwrite64 } { fd=%d count=%d }\n", nsecs, pid, tid, comm, args->fd, args->count);
+}
+
+tracepoint:syscalls:sys_exit_pwrite64
+/ cgroup == @tracked_cgid /
+{
+  $fd = @write_fd[tid];
+  $latency = elapsed - @write_start_time[tid];
+
+  printf("%llu { pid=%d tid=%d proc=%s } { EX pwrite64 } { fd=%d ret=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, args->ret, $latency);
+
+  delete(@write_fd[tid]);
+  delete(@write_start_time[tid]);
+}
+
+/* readv enter + exit */
+tracepoint:syscalls:sys_enter_readv
+/ cgroup == @tracked_cgid /
+{
+  @read_fd[tid] = args->fd;
+  @read_start_time[tid] = elapsed;
+
+  printf("%llu { pid=%d tid=%d proc=%s } { EN readv } { fd=%d }\n", nsecs, pid, tid, comm, args->fd);
+}
+
+tracepoint:syscalls:sys_exit_readv
+/ cgroup == @tracked_cgid /
+{
+  $fd = @read_fd[tid];
+  $latency = elapsed - @read_start_time[tid];
+
+  printf("%llu { pid=%d tid=%d proc=%s } { EX readv } { fd=%d ret=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, args->ret, $latency);
+
+  delete(@read_fd[tid]);
+  delete(@read_start_time[tid]);
+}
+
+/* writev enter + exit */
+tracepoint:syscalls:sys_enter_writev
+/ cgroup == @tracked_cgid /
+{
+  @write_fd[tid] = args->fd;
+  @write_start_time[tid] = elapsed;
+
+  printf("%llu { pid=%d tid=%d proc=%s } { EN writev } { fd=%d }\n", nsecs, pid, tid, comm, args->fd);
+}
+
+tracepoint:syscalls:sys_exit_writev
+/ cgroup == @tracked_cgid /
+{
+  $fd = @write_fd[tid];
+  $latency = elapsed - @write_start_time[tid];
+
+  printf("%llu { pid=%d tid=%d proc=%s } { EX writev } { fd=%d ret=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, args->ret, $latency);
+
+  delete(@write_fd[tid]);
+  delete(@write_start_time[tid]);
+}
+
+/* preadv enter + exit */
+tracepoint:syscalls:sys_enter_preadv
+/ cgroup == @tracked_cgid /
+{
+  @read_fd[tid] = args->fd;
+  @read_start_time[tid] = elapsed;
+
+  printf("%llu { pid=%d tid=%d proc=%s } { EN preadv } { fd=%d }\n", nsecs, pid, tid, comm, args->fd);
+}
+
+tracepoint:syscalls:sys_exit_preadv
+/ cgroup == @tracked_cgid /
+{
+  $fd = @read_fd[tid];
+  $latency = elapsed - @read_start_time[tid];
+
+  printf("%llu { pid=%d tid=%d proc=%s } { EX preadv } { fd=%d ret=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, args->ret, $latency);
+
+  delete(@read_fd[tid]);
+  delete(@read_start_time[tid]);
+}
+
+/* pwritev enter + exit */
+tracepoint:syscalls:sys_enter_pwritev
+/ cgroup == @tracked_cgid /
+{
+  @write_fd[tid] = args->fd;
+  @write_start_time[tid] = elapsed;
+
+  printf("%llu { pid=%d tid=%d proc=%s } { EN pwritev } { fd=%d }\n", nsecs, pid, tid, comm, args->fd);
+}
+
+tracepoint:syscalls:sys_exit_pwritev
+/ cgroup == @tracked_cgid /
+{
+  $fd = @write_fd[tid];
+  $latency = elapsed - @write_start_time[tid];
+
+  printf("%llu { pid=%d tid=%d proc=%s } { EX pwritev } { fd=%d ret=%d latency=%llu }\n", nsecs, pid, tid, comm, $fd, args->ret, $latency);
+
+  delete(@write_fd[tid]);
+  delete(@write_start_time[tid]);
+}
+
+/* mmap enter + exit */
+tracepoint:syscalls:sys_enter_mmap
+/ cgroup == @tracked_cgid /
+{
+  @mmap_fd[tid] = args->fd;
+  @mmap_len[tid] = args->len;
+  @mmap_start_time[tid] = elapsed;
+
+  printf("%llu { pid=%d tid=%d proc=%s } { EN mmap } { fd=%d addr=%lu len=%lu prot=0x%x flags=0x%x off: 0x%081x }\n", nsecs, pid, tid, comm, args->fd, args->addr, args->len, args->prot, args->flags, args->off);
+}
+
+tracepoint:syscalls:sys_exit_mmap
+/ cgroup == @tracked_cgid /
+{
+  $fd   = @mmap_fd[tid]; 
+  $len  = @mmap_len[tid];
+  $latency = elapsed - @mmap_start_time[tid];
+
+  printf("%llu { pid=%d tid=%d proc=%s } { EX mmap } { fd=%d ret=%lu len=%llu latency=%llu }\n", nsecs, pid, tid, comm, $fd, args->ret, $len, $latency);
+
+  delete(@mmap_fd[tid]);
+  delete(@mmap_len[tid]);
+  delete(@mmap_start_time[tid]);
+}
