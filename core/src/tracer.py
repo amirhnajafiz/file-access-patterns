@@ -43,9 +43,10 @@ class Tracer:
 
         logging.debug("[{}] starting tracer: {}".format(self.tid, " ".join(bt_command)))
 
-        # run a new process
-        proc = subprocess.Popen(bt_command)
         try:
+            # run a new process
+            proc = subprocess.Popen(bt_command)
+
             while proc.poll() is None:
                 if self.stop_event.is_set():
                     logging.debug(f"[{self.tid}] stopping tracer")
