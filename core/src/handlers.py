@@ -23,7 +23,7 @@ def handle_execute(output_dir: str, execute: str) -> list[Tracer]:
         tracer.with_options(["-o", os.path.join(output_dir, tname + ".txt")])
         tracer.with_options(["-c", execute])
 
-        tracers.append([tracer])
+        tracers.append(tracer)
 
     return tracers
 
