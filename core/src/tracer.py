@@ -40,7 +40,7 @@ class Tracer:
         """Start tracer in a new process and wait until its over or the stop event is received."""
         # create the bpftrace command
         bt_command = ["bpftrace"] + self.options + [self.script] + self.args
-
+        print(bt_command)
         logging.debug("[{}] starting tracer: {}".format(self.tid, " ".join(bt_command)))
 
         # run a new process
