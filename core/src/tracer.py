@@ -58,6 +58,8 @@ class Tracer:
                         proc.kill()
                     return
                 time.sleep(0.2)
+        except Exception as e:
+            logging.error(f"[{self.tid}] failed: {e}")
         finally:
             logging.debug(f"[{self.tid}]  exiting tracer")
 
