@@ -20,10 +20,10 @@ def process(args: argparse.Namespace):
         tracers = hd.handle_pid(args.out, args.pid)
     elif args.command:
         tracers = hd.handle_command(args.out, args.command)
-    elif args.cgid and args.filter_command:
-        tracers = hd.handle_cgroup_and_command(args.out, args.cgid, args.filter_command)
-    elif args.cgid:
-        tracers = hd.handle_cgroup(args.out, args.cgid)
+    elif args.cgroup and args.filter_command:
+        tracers = hd.handle_cgroup_and_command(args.out, args.cgroup, args.filter_command)
+    elif args.cgroup:
+        tracers = hd.handle_cgroup(args.out, args.cgroup)
     else:
         logging.error("nothing provided")
         sys.exit(1)
@@ -42,7 +42,7 @@ def process(args: argparse.Namespace):
 
 
 def init_vars(args: argparse.Namespace):
-    os.environ["BPFTRACE_MAX_STRLEN"] = args.max_str
+    os.environ["BPFTRACE_MAX_STRLEN"] = args.max_str_len
 
 
 def main():
