@@ -1,8 +1,8 @@
 import os
 
-from files import get_tracing_scripts
-from tracer import Tracer
-from utils import ensure_script
+from src.files import get_tracing_scripts
+from src.tracer import Tracer
+from src.utils import ensure_script
 
 
 def handle_execute(output_dir: str, execute: str) -> list[Tracer]:

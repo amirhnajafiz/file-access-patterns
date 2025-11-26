@@ -8,9 +8,6 @@ from src.files import create_dir
 from src.timestamp import export_reference_timestamps
 from src.utils import must_support_bpftrace
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(ROOT)
-
 
 def process(args: argparse.Namespace):
     # list of tracers (type: src/tracer/Tracer)
