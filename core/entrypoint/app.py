@@ -43,7 +43,10 @@ def process(args: argparse.Namespace):
 
 def init_vars(args: argparse.Namespace):
     os.environ["BPFTRACE_MAX_STRLEN"] = args.max_str_len
-    logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO)
+    logging.basicConfig(
+        level=logging.DEBUG if args.debug else logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    )
 
 
 def main():
