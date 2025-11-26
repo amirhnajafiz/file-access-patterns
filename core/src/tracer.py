@@ -41,25 +41,25 @@ class Tracer:
         # create the bpftrace command
         bt_command = ["bpftrace"] + self.options + [self.script] + self.args
 
-        logging.debug('[%s] starting tracer: " %s "', self.tid, " ".join(bt_command))
+        logging.debug(f"[{self.tid}] starting tracer: {" ".join(bt_command)}")
 
         # run a new process
         proc = subprocess.Popen(bt_command)
         try:
             while proc.poll() is None:
                 if self.stop_event.is_set():
-                    logging.debug("[%s] stopping tracer", self.tid)
+                    logging.debug(f"[{self.tid}] stopping tracer")
                     proc.terminate()
                     try:
-                        logging.debug("[%s] waiting for %ds", self.tid, self.tto)
+                        logging.debug(f"[{self.tid}] waiting for {self.tto}s")
                         proc.wait(timeout=self.tto)
                     except subprocess.TimeoutExpired:
-                        logging.debug("[%s] killing tracer", self.tid)
+                        logging.debug(f"[{self.tid}] killing tracer")
                         proc.kill()
                     return
                 time.sleep(0.2)
         finally:
-            logging.debug("[%s] exiting tracer", self.tid)
+            logging.debug(f"[{self.tid}]  exiting tracer")
 
     def start(self):
         """Start a tracer by calling the __start_tracer in a thread."""

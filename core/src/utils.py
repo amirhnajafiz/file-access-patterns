@@ -17,5 +17,5 @@ def ensure_script(path: str):
     :param path: the target script path
     """
     if not os.path.isfile(path):
-        logging.error("required script '{path}' not found.")
+        logging.error(f"required script '{path}' not found.")
         sys.exit(4)
