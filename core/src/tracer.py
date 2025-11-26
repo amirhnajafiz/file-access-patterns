@@ -26,7 +26,7 @@ class Tracer:
 
         :param options: a list of options to append the current options
         """
-        self.options.append(options)
+        self.options += options
 
     def with_args(self, args: list[str]):
         """
@@ -34,7 +34,7 @@ class Tracer:
 
         :param args: a list of args to append the current args
         """
-        self.args.append(args)
+        self.args += args
 
     def __start_tracer(self):
         """Start tracer in a new process and wait until its over or the stop event is received."""
