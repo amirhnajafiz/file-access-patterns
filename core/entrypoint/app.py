@@ -43,6 +43,7 @@ def process(args: argparse.Namespace):
 
 def init_vars(args: argparse.Namespace):
     os.environ["BPFTRACE_MAX_STRLEN"] = args.max_str_len
+    logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO)
 
 
 def main():
@@ -87,6 +88,12 @@ def main():
         "--max_str_len",
         default="64",
         help="bpf MAX_STRLEN in bytes (default: 64)",
+    )
+    parser.add_argument(
+        "-d",
+        "--debug",
+        action='store_true',
+        help="Enable debug mode (print debug messages)"
     )
 
     # parse the arguments
