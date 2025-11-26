@@ -7,7 +7,7 @@ import os
 
 
 
-CONFIG_PATH = "templates/tracers.json"
+CONFIG_PATH = "tracers.json"
 
 
 def import_json(path: str) -> dict:
