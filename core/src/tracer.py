@@ -41,7 +41,7 @@ class Tracer:
         # create the bpftrace command
         bt_command = ["bpftrace"] + self.options + [self.script] + self.args
 
-        logging.debug(f"[{self.tid}] starting tracer: {" ".join(bt_command)}")
+        logging.debug("[{}] starting tracer: {}".format(self.tid, " ".join(bt_command)))
 
         # run a new process
         proc = subprocess.Popen(bt_command)
