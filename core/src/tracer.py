@@ -14,11 +14,11 @@ class Tracer:
         :param script: the bpftrace script to run
         :param termination_timeout: tracer termination timeout in seconds
         """
-        self.tid = tid  # tracer id
-        self.options = []  # bpftrace options
-        self.args = []  # bpftrace input arguments
-        self.script = script  # bpftrace script
-        self.tto = termination_timeout
+        self.__tid = tid  # tracer id
+        self.__options = []  # bpftrace options
+        self.__args = []  # bpftrace input arguments
+        self.__script = script  # bpftrace script
+        self.__tto = termination_timeout
 
     def with_options(self, options: list[str]):
         """
@@ -26,7 +26,7 @@ class Tracer:
 
         :param options: a list of options to append the current options
         """
-        self.options += options
+        self.__options += options
 
     def with_args(self, args: list[str]):
         """
@@ -34,47 +34,51 @@ class Tracer:
 
         :param args: a list of args to append the current args
         """
-        self.args += args
+        self.__args += args
 
     def __start_tracer(self):
         """Start tracer in a new process and wait until its over or the stop event is received."""
         # create the bpftrace command
-        bt_command = ["bpftrace"] + self.options + [self.script] + self.args
+        bt_command = ["bpftrace"] + self.__options + [self.__script] + self.__args
 
-        logging.debug("[{}] starting tracer: {}".format(self.tid, " ".join(bt_command)))
+        logging.debug("[{}] starting tracer: {}".format(self.__tid, " ".join(bt_command)))
 
         try:
             # run a new process
             proc = subprocess.Popen(bt_command)
 
             while proc.poll() is None:
-                if self.stop_event.is_set():
-                    logging.debug(f"[{self.tid}] stopping tracer")
+                if self.__stop_event.is_set():
+                    logging.debug(f"[{self.__tid}] stopping tracer")
                     proc.terminate()
                     try:
-                        logging.debug(f"[{self.tid}] waiting for {self.tto}s")
-                        proc.wait(timeout=self.tto)
+                        logging.debug(f"[{self.__tid}] waiting for {self.__tto}s")
+                        proc.wait(timeout=self.__tto)
                     except subprocess.TimeoutExpired:
-                        logging.debug(f"[{self.tid}] killing tracer")
+                        logging.debug(f"[{self.__tid}] killing tracer")
                         proc.kill()
                     return
                 time.sleep(0.2)
         except Exception as e:
-            logging.error(f"[{self.tid}] failed: {e}")
+            logging.error(f"[{self.__tid}] failed: {e}")
         finally:
-            logging.debug(f"[{self.tid}]  exiting tracer")
+            logging.debug(f"[{self.__tid}]  exiting tracer")
 
     def start(self):
         """Start a tracer by calling the __start_tracer in a thread."""
-        self.stop_event = threading.Event()
-        self.t = threading.Thread(target=self.__start_tracer, args=(), daemon=True)
-        self.t.start()
+        self.__stop_event = threading.Event()
+        self.__t = threading.Thread(target=self.__start_tracer, args=(), daemon=True)
+        self.__t.start()
 
     def stop(self):
         """Stop the tracer by terminating its process and thread."""
-        self.stop_event.set()
-        self.t.join()
+        self.__stop_event.set()
+        self.__t.join()
 
     def wait(self):
         """Wait for the tracing process to finish."""
-        self.t.join()
+        self.__t.join()
+
+    def name(self) -> str:
+        """Get the name of the tracer."""
+        return self.__tid

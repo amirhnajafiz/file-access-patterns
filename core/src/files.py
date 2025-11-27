@@ -18,7 +18,7 @@ def get_tracing_scripts(dir_path: str) -> dict[str:str]:
     :param dir_path: base directory of the target tracer
     """
     return {
-        "meta_logs": os.path.join(dir_path, "meta_trace.bt"),
-        "io_logs": os.path.join(dir_path, "io_trace.bt"),
-        "event_logs": os.path.join(dir_path, "events_trace.bt"),
+        "meta": os.path.join(dir_path, "meta_trace.bt"),
+        "io": os.path.join(dir_path, "io_trace.bt"),
+        "event": os.path.join(dir_path, "events_trace.bt"),
     }

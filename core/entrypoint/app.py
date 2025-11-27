@@ -1,11 +1,11 @@
 import argparse
 import logging
 import os
+import signal
 import sys
 
 import src.handlers as hd
-from src.files import create_dir
-from src.timestamp import export_reference_timestamps
+from src.matchbox import extinguish_tracing, ignite_tracing
 from src.utils import must_support_bpftrace
 
 
@@ -21,31 +21,28 @@ def process(args: argparse.Namespace):
     elif args.command:
         tracers = hd.handle_command(args.out, args.command)
     elif args.cgroup and args.filter_command:
-        tracers = hd.handle_cgroup_and_command(args.out, args.cgroup, args.filter_command)
+        tracers = hd.handle_cgroup_and_command(
+            args.out, args.cgroup, args.filter_command
+        )
     elif args.cgroup:
         tracers = hd.handle_cgroup(args.out, args.cgroup)
     else:
-        logging.error("nothing provided")
+        logging.error("no input provided!")
         sys.exit(1)
 
-    # prepare tracing requirements
-    create_dir(args.out)
-    export_reference_timestamps(args.out)
+    # set the termination handlers
+    signal.signal(signal.SIGINT, extinguish_tracing(tracers=tracers))
+    signal.signal(signal.SIGTERM, extinguish_tracing(tracers=tracers))
 
-    # loop over tracers and start
-    for tracer in tracers:
-        tracer.start()
-
-    # wait for all tracers
-    for tracer in tracers:
-        tracer.wait()
+    # start tracers
+    ignite_tracing(output_dir=args.out, tracers=tracers)
 
 
 def init_vars(args: argparse.Namespace):
     os.environ["BPFTRACE_MAX_STRLEN"] = args.max_str_len
     logging.basicConfig(
         level=logging.DEBUG if args.debug else logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
 
@@ -95,15 +92,12 @@ def main():
     parser.add_argument(
         "-d",
         "--debug",
-        action='store_true',
-        help="Enable debug mode (print debug messages)"
+        action="store_true",
+        help="Enable debug mode (print debug messages)",
     )
 
     # parse the arguments
     args = parser.parse_args()
-
-    # check the requirements
-    must_support_bpftrace()
 
     # init variables
     init_vars(args=args)
@@ -113,4 +107,5 @@ def main():
 
 
 if __name__ == "__main__":
+    must_support_bpftrace()
     main()
