@@ -12,7 +12,7 @@ services:
       memlock:
         soft: -1
         hard: -1
-    entrypoint: ["/usr/local/app/entrypoint/units.sh"]
+    entrypoint: ["/usr/local/app/tests/tracings_test.sh"]
 
   # trace help only builds the image and runs the help command
   # to ensure the docker pipeline works without any errors.
@@ -20,7 +20,7 @@ services:
     build:
       context: .
       dockerfile: build/core/Dockerfile
-    entrypoint: ["python3", "/usr/local/app/entrypoint/trace.py"]
+    entrypoint: ["python3", "/usr/local/app/entrypoint/app.py"]
     command: ["-h"]
 
   # user end-to-end test runs a tracing operation to validate the
@@ -41,8 +41,8 @@ services:
     volumes:
       - /sys:/sys:rw
       - ./tests/logs:/logs:rw
-    entrypoint: ["python3", "/usr/local/app/entrypoint/trace.py"]
-    command: ["-c", "ls", "-o", "/logs/trace_ls"]
+    entrypoint: ["python3", "/usr/local/app/entrypoint/app.py"]
+    command: ["-e", "ls", "-o", "/logs/trace_ls"]
   
   # the k8s test must be run on a kubernetes node that has kubelet.
   # you must add the pod, namespace, and container that you want for tracing.

@@ -30,10 +30,13 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /usr/local/app
 
 # Copy the files into the working directory
-COPY src/ .
+COPY core/ .
 
 # Set executable permissions for the trace script
-RUN chmod +x /usr/local/app/entrypoint/units.sh
+RUN chmod +x /usr/local/app/tests/tracings_test.sh
+
+# Set pythonpath
+ENV PYTHONPATH=/usr/local/app
 
 # Default command
 CMD ["/bin/sh"]

@@ -1,14 +1,14 @@
 # Use official go image
 FROM golang:1.25-alpine3.21 AS build
 
-COPY go.mod go.sum /usr/local/app
+COPY operator/go.mod operator/go.sum /usr/local/app/
 
 # download all dependencies. Dependencies will be cached if the go.mod and go.sum files are not changed
 RUN go mod download
 
-COPY include /usr/local/app
-COPY pkg /usr/local/app
-COPY main.go /usr/local/app
+COPY operator/include /usr/local/app
+COPY operator/pkg /usr/local/app
+COPY operator/main.go /usr/local/app
 
 WORKDIR /usr/local/app
 
