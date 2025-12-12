@@ -1,7 +1,7 @@
 import os
 
 from src.files import get_tracing_scripts
-from src.tracer import Tracer
+from src.tracer import Tracer, RotateTracer
 from src.utils import ensure_script
 
 
@@ -115,7 +115,8 @@ def handle_cgroup(output_dir: str, cgid: str) -> list[Tracer]:
         ensure_script(tpath)
 
         tracer = Tracer(tname, tpath)
-        tracer.with_options(["-o", os.path.join(output_dir, tname + "_logs.txt")])
+        tracer = RotateTracer(tname, tpath, output_dir, rotate_size=1*1024*1024)
+        #tracer.with_options(["-o", os.path.join(output_dir, tname + "_logs.txt")])
         tracer.with_args([cgid])
 
         tracers.append(tracer)

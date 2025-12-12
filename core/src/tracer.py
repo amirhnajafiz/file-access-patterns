@@ -2,6 +2,7 @@ import logging
 import subprocess
 import threading
 import time
+import os
 
 
 class Tracer:
@@ -41,7 +42,9 @@ class Tracer:
         # create the bpftrace command
         bt_command = ["bpftrace"] + self.__options + [self.__script] + self.__args
 
-        logging.debug("[{}] starting tracer: {}".format(self.__tid, " ".join(bt_command)))
+        logging.debug(
+            "[{}] starting tracer: {}".format(self.__tid, " ".join(bt_command))
+        )
 
         try:
             # run a new process
@@ -82,3 +85,140 @@ class Tracer:
     def name(self) -> str:
         """Get the name of the tracer."""
         return self.__tid
+
+
+class RotateTracer:
+    """Tracer runs bpftrace in a separate thread with output log rotation."""
+
+    def __init__(
+        self,
+        tid: str,
+        script: str,
+        output_dir: str,
+        termination_timeout: int = 2,
+        rotate_size=100 * 1024 * 1024,
+    ):
+        self.__tid = tid
+        self.__script = script
+        self.__output_dir = output_dir
+        self.__tto = termination_timeout
+        self.__rotate_size = rotate_size
+
+        self.__options = []
+        self.__args = []
+
+        self.__stop_event = None
+        self.__t = None
+
+        # rotation state
+        self.__file_index = 0
+        self.__current_size = 0
+        self.__f = None
+
+    # ----------------------------------------------------------------------
+    # API (same as your original)
+    # ----------------------------------------------------------------------
+
+    def with_options(self, options: list[str]):
+        self.__options += options
+
+    def with_args(self, args: list[str]):
+        self.__args += args
+
+    def name(self) -> str:
+        return self.__tid
+
+    def start(self):
+        """Start the tracing thread."""
+        self.__stop_event = threading.Event()
+        self.__t = threading.Thread(target=self.__start_tracer, daemon=True)
+        self.__t.start()
+
+    def stop(self):
+        """Stop the tracer."""
+        if self.__stop_event:
+            self.__stop_event.set()
+        if self.__t:
+            self.__t.join()
+
+    def wait(self):
+        """Wait until tracer thread exits."""
+        if self.__t:
+            self.__t.join()
+
+    # ----------------------------------------------------------------------
+    # Internal helpers
+    # ----------------------------------------------------------------------
+
+    def __open_new_file(self):
+        """Rotate output file."""
+        if self.__f:
+            self.__f.close()
+
+        filename = os.path.join(self.__output_dir, f"trace_{self.__tid}_{self.__file_index}.log")
+        logging.info(f"[{self.__tid}] rotating to {filename}")
+
+        self.__f = open(filename, "w", buffering=1)  # line-buffered
+        self.__current_size = 0
+        self.__file_index += 1
+
+    def __write_line(self, line: str):
+        data = line.encode()
+        if self.__current_size + len(data) > self.__rotate_size:
+            self.__open_new_file()
+
+        self.__f.write(line)
+        self.__current_size += len(data)
+
+    # ----------------------------------------------------------------------
+    # Main tracer logic
+    # ----------------------------------------------------------------------
+
+    def __start_tracer(self):
+        """Start bpftrace and rotate logs while reading stdout."""
+        bt_cmd = ["bpftrace"] + self.__options + [self.__script] + self.__args
+        logging.debug(f"[{self.__tid}] starting tracer: {' '.join(bt_cmd)}")
+
+        # Setup first output file
+        self.__open_new_file()
+
+        try:
+            proc = subprocess.Popen(
+                bt_cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                bufsize=1,  # line-buffered read
+            )
+
+            # Read until process ends or stop requested
+            while True:
+                if self.__stop_event.is_set():
+                    logging.debug(f"[{self.__tid}] stopping tracer")
+                    proc.terminate()
+                    try:
+                        proc.wait(timeout=self.__tto)
+                    except subprocess.TimeoutExpired:
+                        logging.debug(f"[{self.__tid}] killing tracer")
+                        proc.kill()
+                    break
+
+                # Non-blocking line read
+                line = proc.stdout.readline()
+                if not line:
+                    # process probably exited
+                    if proc.poll() is not None:
+                        break
+                    time.sleep(0.05)
+                    continue
+
+                # Write line safely with rotation
+                self.__write_line(line)
+
+        except Exception as e:
+            logging.error(f"[{self.__tid}] tracer failed: {e}")
+
+        finally:
+            if self.__f:
+                self.__f.close()
+            logging.debug(f"[{self.__tid}] exiting tracer")
