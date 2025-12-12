@@ -103,7 +103,6 @@ def main():
 
     # parse the arguments
     args = parser.parse_args()
-    logging.info(args)
 
     # init variables
     init_vars(args=args)
