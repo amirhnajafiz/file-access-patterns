@@ -19,16 +19,16 @@ class Tracer(ABC):
         :param output_dir: the output directory to export logs
         :param termination_timeout: tracer termination timeout in seconds
         """
-        self.__tid = tid  # tracer id
-        self.__script = script  # bpftrace script
-        self.__tto = termination_timeout
-        self.__output_dir = output_dir
+        self._tid = tid  # tracer id
+        self._script = script  # bpftrace script
+        self._tto = termination_timeout
+        self._output_dir = output_dir
 
-        self.__options = []  # bpftrace options
-        self.__args = []  # bpftrace input arguments
+        self._options = []  # bpftrace options
+        self._args = []  # bpftrace input arguments
 
-        self.__stop_event = None
-        self.__t = None
+        self._stop_event = None
+        self._t = None
 
     def with_options(self, options: list[str]):
         """
@@ -36,7 +36,7 @@ class Tracer(ABC):
 
         :param options: a list of options to append the current options
         """
-        self.__options += options
+        self._options += options
 
     def with_args(self, args: list[str]):
         """
@@ -44,28 +44,28 @@ class Tracer(ABC):
 
         :param args: a list of args to append the current args
         """
-        self.__args += args
+        self._args += args
 
     def start(self):
         """Start a tracer by calling the __start_tracer in a thread."""
-        self.__stop_event = threading.Event()
-        self.__t = threading.Thread(target=self.start_tracer, args=(), daemon=True)
-        self.__t.start()
+        self._stop_event = threading.Event()
+        self._t = threading.Thread(target=self.start_tracer, args=(), daemon=True)
+        self._t.start()
 
     def stop(self):
         """Stop the tracer by terminating its process and thread."""
-        self.__stop_event.set()
-        if self.__t:
-            self.__t.join()
+        self._stop_event.set()
+        if self._t:
+            self._t.join()
 
     def wait(self):
         """Wait for the tracing process to finish."""
-        if self.__t:
-            self.__t.join()
+        if self._t:
+            self._t.join()
 
     def name(self) -> str:
         """Get the name of the tracer."""
-        return self.__tid
+        return self._tid
 
     @classmethod
     def start_tracer(self):
@@ -78,14 +78,14 @@ class MonoTracer(Tracer):
     def start_tracer(self):
         """Start tracer in a new process and wait until its over or the stop event is received."""
         self.with_options(
-            ["-o", os.path.join(self.__output_dir, self.__tid + "_logs.txt")]
+            ["-o", os.path.join(self._output_dir, self._tid + "_logs.txt")]
         )
 
         # create the bpftrace command
-        bt_command = ["bpftrace"] + self.__options + [self.__script] + self.__args
+        bt_command = ["bpftrace"] + self._options + [self._script] + self._args
 
         logging.debug(
-            "[{}] starting tracer: {}".format(self.__tid, " ".join(bt_command))
+            "[{}] starting tracer: {}".format(self._tid, " ".join(bt_command))
         )
 
         try:
@@ -93,21 +93,21 @@ class MonoTracer(Tracer):
             proc = subprocess.Popen(bt_command)
 
             while proc.poll() is None:
-                if self.__stop_event.is_set():
-                    logging.debug(f"[{self.__tid}] stopping tracer")
+                if self._stop_event.is_set():
+                    logging.debug(f"[{self._tid}] stopping tracer")
                     proc.terminate()
                     try:
-                        logging.debug(f"[{self.__tid}] waiting for {self.__tto}s")
-                        proc.wait(timeout=self.__tto)
+                        logging.debug(f"[{self._tid}] waiting for {self._tto}s")
+                        proc.wait(timeout=self._tto)
                     except subprocess.TimeoutExpired:
-                        logging.debug(f"[{self.__tid}] killing tracer")
+                        logging.debug(f"[{self._tid}] killing tracer")
                         proc.kill()
                     return
                 time.sleep(0.2)
         except Exception as e:
-            logging.error(f"[{self.__tid}] failed: {e}")
+            logging.error(f"[{self._tid}] failed: {e}")
         finally:
-            logging.debug(f"[{self.__tid}]  exiting tracer")
+            logging.debug(f"[{self._tid}]  exiting tracer")
 
 
 class RotateTracer(Tracer):
@@ -121,38 +121,38 @@ class RotateTracer(Tracer):
 
         :param rotate_size: the file size for rotate
         """
-        self.__rotate_size = rotate_size
-        self.__file_index = 0
-        self.__current_size = 0
-        self.__f = None
+        self._rotate_size = rotate_size
+        self._file_index = 0
+        self._current_size = 0
+        self._f = None
 
     def __open_new_file(self):
         """Rotate output file."""
-        if self.__f:
-            self.__f.close()
+        if self._f:
+            self._f.close()
 
         filename = os.path.join(
-            self.__output_dir, f"trace_{self.__tid}_{self.__file_index}.log"
+            self._output_dir, f"trace_{self._tid}_{self._file_index}.log"
         )
-        logging.info(f"[{self.__tid}] rotating to {filename}")
+        logging.info(f"[{self._tid}] rotating to {filename}")
 
-        self.__f = open(filename, "w", buffering=1)  # line-buffered
-        self.__current_size = 0
-        self.__file_index += 1
+        self._f = open(filename, "w", buffering=1)  # line-buffered
+        self._current_size = 0
+        self._file_index += 1
 
     def __write_line(self, line: str):
         data = line.encode()
-        if self.__current_size + len(data) > self.__rotate_size:
+        if self._current_size + len(data) > self._rotate_size:
             self.__open_new_file()
 
-        self.__f.write(line)
-        self.__current_size += len(data)
+        self._f.write(line)
+        self._current_size += len(data)
 
     def start_tracer(self):
         """Start bpftrace and rotate logs while reading stdout."""
-        bt_cmd = ["bpftrace"] + self.__options + [self.__script] + self.__args
+        bt_cmd = ["bpftrace"] + self._options + [self._script] + self._args
 
-        logging.debug(f"[{self.__tid}] starting tracer: {' '.join(bt_cmd)}")
+        logging.debug(f"[{self._tid}] starting tracer: {' '.join(bt_cmd)}")
 
         # setup first output file
         self.__open_new_file()
@@ -168,13 +168,13 @@ class RotateTracer(Tracer):
 
             # read until process ends or stop requested
             while True:
-                if self.__stop_event.is_set():
-                    logging.debug(f"[{self.__tid}] stopping tracer")
+                if self._stop_event.is_set():
+                    logging.debug(f"[{self._tid}] stopping tracer")
                     proc.terminate()
                     try:
-                        proc.wait(timeout=self.__tto)
+                        proc.wait(timeout=self._tto)
                     except subprocess.TimeoutExpired:
-                        logging.debug(f"[{self.__tid}] killing tracer")
+                        logging.debug(f"[{self._tid}] killing tracer")
                         proc.kill()
                     break
 
@@ -190,8 +190,8 @@ class RotateTracer(Tracer):
                 # write line safely with rotation
                 self.__write_line(line)
         except Exception as e:
-            logging.error(f"[{self.__tid}] tracer failed: {e}")
+            logging.error(f"[{self._tid}] tracer failed: {e}")
         finally:
-            if self.__f:
-                self.__f.close()
-            logging.debug(f"[{self.__tid}] exiting tracer")
+            if self._f:
+                self._f.close()
+            logging.debug(f"[{self._tid}] exiting tracer")
