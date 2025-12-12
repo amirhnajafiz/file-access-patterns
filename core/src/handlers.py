@@ -1,5 +1,3 @@
-import os
-
 from src.files import get_tracing_scripts
 from src.tracer import Tracer, RotateTracer
 from src.utils import ensure_script
@@ -20,7 +18,6 @@ def handle_execute(output_dir: str, execute: str) -> list[Tracer]:
         ensure_script(tpath)
 
         tracer = Tracer(tname, tpath)
-        tracer.with_options(["-o", os.path.join(output_dir, tname + "_logs.txt")])
         tracer.with_options(["-c", execute])
 
         tracers.append(tracer)
@@ -43,7 +40,6 @@ def handle_pid(output_dir: str, pid: str) -> list[Tracer]:
         ensure_script(tpath)
 
         tracer = Tracer(tname, tpath)
-        tracer.with_options(["-o", os.path.join(output_dir, tname + "_logs.txt")])
         tracer.with_args([pid])
 
         tracers.append(tracer)
@@ -66,7 +62,6 @@ def handle_command(output_dir: str, command: str) -> list[Tracer]:
         ensure_script(tpath)
 
         tracer = Tracer(tname, tpath)
-        tracer.with_options(["-o", os.path.join(output_dir, tname + "_logs.txt")])
         tracer.with_args([command])
 
         tracers.append(tracer)
@@ -92,7 +87,6 @@ def handle_cgroup_and_command(
         ensure_script(tpath)
 
         tracer = Tracer(tname, tpath)
-        tracer.with_options(["-o", os.path.join(output_dir, tname + "_logs.txt")])
         tracer.with_args([cgid, filter_command])
 
         tracers.append(tracer)
@@ -116,7 +110,6 @@ def handle_cgroup(output_dir: str, cgid: str) -> list[Tracer]:
 
         tracer = Tracer(tname, tpath)
         tracer = RotateTracer(tname, tpath, output_dir, rotate_size=256*1024)
-        #tracer.with_options(["-o", os.path.join(output_dir, tname + "_logs.txt")])
         tracer.with_args([cgid])
 
         tracers.append(tracer)
