@@ -30,7 +30,9 @@ def process(args: argparse.Namespace):
         logging.info(
             f"tracing {args.container}/{args.filter_command} in {args.namespace}/{args.pod}"
         )
-        tracers = hd.handle_cgroup_and_command(args.out, cgroup, args.filter_command, args.rotate, args.rotate_size)
+        tracers = hd.handle_cgroup_and_command(
+            args.out, cgroup, args.filter_command, args.rotate, args.rotate_size
+        )
     else:
         logging.info(f"tracing {args.container} in {args.namespace}/{args.pod}")
         tracers = hd.handle_cgroup(args.out, cgroup, args.rotate, args.rotate_size)

@@ -78,7 +78,7 @@ class MonoTracer(Tracer):
     def start_tracer(self):
         """Start tracer in a new process and wait until its over or the stop event is received."""
         self.with_options(
-            ["-o", os.path.join(self._output_dir, self._tid + "_logs.txt")]
+            ["-o", os.path.join(self._output_dir, f"trace_{self._tid}_0.log")]
         )
 
         # create the bpftrace command
