@@ -49,7 +49,6 @@ tracepoint:sched:sched_process_exit
 tracepoint:exceptions:page_fault_user
 / @tracked[pid] /
 {
-  @fault_start[tid] = 1;
   printf("%llu {pid=%d tid=%d proc=%s}{EN page_fault_user}{addr=%lu}\n", nsecs, pid, tid, comm, args->address); 
 }
 
@@ -63,5 +62,4 @@ kretprobe:handle_mm_fault
 / @tracked[pid] /
 {
   printf("%llu {pid=%d tid=%d proc=%s}{EX handle_mm_fault}{}\n", nsecs, pid, tid, comm);
-  delete(@fault_start[tid]);
 }
