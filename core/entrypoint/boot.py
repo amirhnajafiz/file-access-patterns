@@ -78,8 +78,8 @@ def main():
     parser.add_argument(
         "-mxsl",
         "--max_str_len",
-        default="64",
-        help="bpf MAX_STRLEN in bytes (default: 64)",
+        default="150",
+        help="bpf MAX_STRLEN in bytes (default: 150)",
     )
     parser.add_argument(
         "-d",
