@@ -115,7 +115,7 @@ def handle_cgroup(output_dir: str, cgid: str) -> list[Tracer]:
         ensure_script(tpath)
 
         tracer = Tracer(tname, tpath)
-        tracer = RotateTracer(tname, tpath, output_dir, rotate_size=1*1024*1024)
+        tracer = RotateTracer(tname, tpath, output_dir, rotate_size=256*1024)
         #tracer.with_options(["-o", os.path.join(output_dir, tname + "_logs.txt")])
         tracer.with_args([cgid])
 
