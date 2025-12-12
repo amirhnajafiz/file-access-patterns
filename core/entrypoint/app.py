@@ -119,6 +119,8 @@ def main():
     # init variables
     init_vars(args=args)
 
+    logging.info(f"configs: {vars(args)}")
+
     # start processing the input
     process(args=args)
 
