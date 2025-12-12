@@ -15,17 +15,21 @@ def process(args: argparse.Namespace):
 
     # call handler based on user input to get the tracers
     if args.execute:
-        tracers = hd.handle_execute(args.out, args.execute)
+        tracers = hd.handle_execute(
+            args.out, args.execute, args.rotate, args.rotate_size
+        )
     elif args.pid:
-        tracers = hd.handle_pid(args.out, args.pid)
+        tracers = hd.handle_pid(args.out, args.pid, args.rotate, args.rotate_size)
     elif args.command:
-        tracers = hd.handle_command(args.out, args.command)
+        tracers = hd.handle_command(
+            args.out, args.command, args.rotate, args.rotate_size
+        )
     elif args.cgroup and args.filter_command:
         tracers = hd.handle_cgroup_and_command(
-            args.out, args.cgroup, args.filter_command
+            args.out, args.cgroup, args.filter_command, args.rotate, args.rotate_size
         )
     elif args.cgroup:
-        tracers = hd.handle_cgroup(args.out, args.cgroup)
+        tracers = hd.handle_cgroup(args.out, args.cgroup, args.rotate, args.rotate_size)
     else:
         logging.error("no input provided!")
         sys.exit(1)
@@ -94,6 +98,19 @@ def main():
         "--debug",
         action="store_true",
         help="Enable debug mode (print debug messages)",
+    )
+    parser.add_argument(
+        "-r",
+        "--rotate",
+        action="store_true",
+        help="Enable log rotation (useful to break large tracing log output)",
+    )
+    parser.add_argument(
+        "-rs",
+        "--rotate_size",
+        type=int,
+        default=100 * 1024 * 1024,
+        help="Setting the rotate size (default is 100MB)",
     )
 
     # parse the arguments
