@@ -30,10 +30,10 @@ def process(args: argparse.Namespace):
         logging.info(
             f"tracing {args.container}/{args.filter_command} in {args.namespace}/{args.pod}"
         )
-        tracers = hd.handle_cgroup_and_command(args.out, cgroup, args.filter_command)
+        tracers = hd.handle_cgroup_and_command(args.out, cgroup, args.filter_command, args.rotate, args.rotate_size)
     else:
         logging.info(f"tracing {args.container} in {args.namespace}/{args.pod}")
-        tracers = hd.handle_cgroup(args.out, cgroup)
+        tracers = hd.handle_cgroup(args.out, cgroup, args.rotate, args.rotate_size)
 
     # set the termination handlers
     signal.signal(signal.SIGINT, extinguish_tracing(tracers=tracers))
@@ -86,6 +86,19 @@ def main():
         "--debug",
         action="store_true",
         help="Enable debug mode (print debug messages)",
+    )
+    parser.add_argument(
+        "-r",
+        "--rotate",
+        action="store_true",
+        help="Enable log rotation (useful to break large tracing log output)",
+    )
+    parser.add_argument(
+        "-rs",
+        "--rotate_size",
+        type=int,
+        default=100 * 1024 * 1024,
+        help="Setting the rotate size (default is 100MB)",
     )
 
     # parse the arguments
