@@ -18,8 +18,6 @@ def get_tracing_scripts(dir_path: str) -> dict[str:str]:
     :param dir_path: base directory of the target tracer
     """
     return {
-        "meta": os.path.join(dir_path, "meta_trace.bt"),
         "io": os.path.join(dir_path, "io_trace.bt"),
-        "kprobes": os.path.join(dir_path, "kprobes_trace.bt"),
         "memory": os.path.join(dir_path, "memory_trace.bt"),
     }
