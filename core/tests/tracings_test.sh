@@ -4,7 +4,7 @@
 set -eu
 
 BASE_DIR="bpftrace"
-SCRIPT_NAMES="events_trace.bt io_trace.bt meta_trace.bt"
+SCRIPT_NAMES="exceptions_trace.bt io_trace.bt meta_trace.bt kprobes_trace.bt memory_trace.bt"
 
 echo "[INFO] Starting bpftrace dry-run tests"
 
