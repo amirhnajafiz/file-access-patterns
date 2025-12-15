@@ -20,5 +20,7 @@ def get_tracing_scripts(dir_path: str) -> dict[str:str]:
     return {
         "meta": os.path.join(dir_path, "meta_trace.bt"),
         "io": os.path.join(dir_path, "io_trace.bt"),
-        "event": os.path.join(dir_path, "events_trace.bt"),
+        "exceptions": os.path.join(dir_path, "exceptions_trace.bt"),
+        "kprobes": os.path.join(dir_path, "kprobes_trace.bt"),
+        "memory": os.path.join(dir_path, "memory_trace.bt"),
     }
