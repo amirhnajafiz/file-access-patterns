@@ -12,5 +12,5 @@ kretprobe:handle_mm_fault
 / @start[tid] /
 {
   printf("%llu {pid=%d tid=%d proc=%s}{EX handle_mm_fault}{latency=%llu}\n", nsecs, pid, tid, comm, nsecs - @start[tid]);
-  delete(start[tid]);
+  delete(@start[tid]);
 }
