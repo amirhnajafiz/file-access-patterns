@@ -4,7 +4,6 @@
     "inputs_dir": "tracers",
     "outputs_dir": "core/bpftrace",
     "sources": [
-        "exceptions_trace.bt",
         "io_trace.bt",
         "kprobes_trace.bt",
         "memory_trace.bt",
