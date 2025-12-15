@@ -1,14 +1,14 @@
 #!/usr/bin/env bpftrace
-// dir: src/bpftrace/pid
+// dir: src/bpftrace/execute
 // log format: [timestamp] {pid=[pid] tid=[tid] proc=[command]}{[EN|EX] [operand]} {[key=value]}
 
 BEGIN
 {
-  @fname[$1, 0] = "STDIN";
-  @fname[$1, 1] = "STDOUT";
-  @fname[$1, 2] = "STDERR";
-  @tracked[$1] = 1;
-  printf("%s START tracing events for PID %llu\n", strftime("%Y-%m-%d %H:%M:%S", nsecs), $1);
+  @fname[cpid, 0] = "STDIN";
+  @fname[cpid, 1] = "STDOUT";
+  @fname[cpid, 2] = "STDERR";
+  @tracked[cpid] = 1;
+  printf("%s START tracing events for CPID %llu\n", strftime("%Y-%m-%d %H:%M:%S", nsecs), cpid);
 }
 
 /* ----- Child Process Tracing ----- */
@@ -48,21 +48,28 @@ tracepoint:sched:sched_process_exit
   delete(@tracked[pid]);
 }
 
-/* page fault user */
-tracepoint:exceptions:page_fault_user
+/* mmap enter + exit */
+tracepoint:syscalls:sys_enter_mmap
 / @tracked[pid] /
 {
-  printf("%llu {pid=%d tid=%d proc=%s}{EN page_fault_user}{addr=%lu}\n", nsecs, pid, tid, comm, args->address); 
+  printf("%llu {pid=%d tid=%d proc=%s}{EN mmap}{fd=%d addr=%lu len=%lu}\n", nsecs, pid, tid, comm, args->fd, args->addr, args->len);
 }
 
-kprobe:handle_mm_fault
+tracepoint:syscalls:sys_exit_mmap
 / @tracked[pid] /
 {
-  printf("%llu {pid=%d tid=%d proc=%s}{EN handle_mm_fault}{}\n", nsecs, pid, tid, comm);
+  printf("%llu {pid=%d tid=%d proc=%s}{EX mmap}{ret=%lu}\n", nsecs, pid, tid, comm, args->ret);
 }
 
-kretprobe:handle_mm_fault
+/* munmap enter + exit */
+tracepoint:syscalls:sys_enter_munmap
 / @tracked[pid] /
 {
-  printf("%llu {pid=%d tid=%d proc=%s}{EX handle_mm_fault}{}\n", nsecs, pid, tid, comm);
+  printf("%llu {pid=%d tid=%d proc=%s}{EN munmap}{addr=%lu len=%lu}\n", nsecs, pid, tid, comm, args->addr, args->len);
+}
+
+tracepoint:syscalls:sys_exit_munmap
+/ @tracked[pid] /
+{
+  printf("%llu {pid=%d tid=%d proc=%s}{EX munmap}{ret=%lu}\n", nsecs, pid, tid, comm, args->ret);
 }
