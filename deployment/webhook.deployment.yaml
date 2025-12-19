@@ -4,7 +4,7 @@ metadata:
   labels:
     app: flap
   name: flap
-  namespace: flap
+  namespace: default
 spec:
   replicas: 1
   selector:
