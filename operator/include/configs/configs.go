@@ -22,6 +22,10 @@ func LoadConfigs() (*Config, error) {
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
+	viper.BindEnv("FLAP_LOG_LEVEL")
+	viper.BindEnv("FLAP_JSON_LOG")
+	viper.BindEnv("FLAP_TLS")
+
 	var cfg Config
 	if err := viper.Unmarshal(&cfg); err != nil {
 		return nil, err
