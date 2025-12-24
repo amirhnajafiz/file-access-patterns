@@ -24,7 +24,7 @@ spec:
               value: "debug"
             - name: FLAP_JSON_LOG
               value: "false"
-            - name: FLAP_TLS
+            - name: FLAP_TLS__ENABLE
               value: "true"
           volumeMounts:
             - name: tls

@@ -14,7 +14,7 @@ webhooks:
       service:
         namespace: flap-operator
         name: flap-operator-service
-        path: /mutate
+        path: /mutate/crt
         port: 443
       caBundle: |
         LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUMzakNDQWNZQ0NRRFlHcU05a0ZZUjJqQU5CZ2tx
