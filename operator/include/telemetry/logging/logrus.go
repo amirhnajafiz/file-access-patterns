@@ -18,5 +18,9 @@ func SetLogger(level string, jsonLog bool) {
 
 	if jsonLog {
 		logrus.SetFormatter(&logrus.JSONFormatter{})
+	} else {
+		logrus.SetFormatter(&logrus.TextFormatter{
+			DisableColors: true,
+		})
 	}
 }

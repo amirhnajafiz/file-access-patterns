@@ -7,10 +7,7 @@ import (
 )
 
 // ServeHTTPS start a server on port 443.
-// tls files must exist in `/etc/flap/tls`, otherwise the program panics.
-func ServeHTTPS() {
-	cert := "/etc/flap/tls/tls.crt"
-	key := "/etc/flap/tls/tls.key"
+func ServeHTTPS(cert, key string) {
 	logrus.Print("Listening on port 443...")
 	logrus.Fatal(http.ListenAndServeTLS(":443", cert, key, nil))
 }

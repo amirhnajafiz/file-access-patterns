@@ -1,8 +1,7 @@
 package configs
 
 import (
-	"fmt"
-	"reflect"
+	"log"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -11,54 +10,36 @@ import (
 // Config hold the operator tune parameters.
 // all configuration parameters must be set as environment variables or as a `.env` file.
 type Config struct {
-	LogLevel string `mapstructure:"flap.log_level" env:"FLAP_LOG_LEVEL"`
-	JSONLog  bool   `mapstructure:"flap.json_log"  env:"FLAP_JSON_LOG"`
-	TLS      bool   `mapstructure:"flap.tls"       env:"FLAP_TLS"`
-}
-
-func bindEnvs(v *viper.Viper, iface interface{}) error {
-	val := reflect.ValueOf(iface)
-	if val.Kind() != reflect.Ptr {
-		return fmt.Errorf("bindEnvs expects a pointer")
-	}
-
-	val = val.Elem()
-	typ := val.Type()
-
-	for i := 0; i < val.NumField(); i++ {
-		field := typ.Field(i)
-
-		key := field.Tag.Get("mapstructure")
-		env := field.Tag.Get("env")
-
-		if key == "" || env == "" {
-			continue
-		}
-
-		if err := v.BindEnv(key, env); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	LogLevel string `mapstructure:"log_level"`
+	JSONLog  bool   `mapstructure:"json_log"`
+	TLS      struct {
+		Enable   bool   `mapstructure:"enable"`
+		CertPath string `mapstructure:"cert_path"`
+		KeyPath  string `mapstructure:"key_path"`
+	} `mapstructure:"tls"`
 }
 
 // LoadConfigs reads the env variables into a Config struct.
 func LoadConfigs() (*Config, error) {
 	v := viper.New()
 
-	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	// read from `.env`
+	v.SetConfigFile(".env")
+	v.AddConfigPath(".")
+
+	// bind env variables automatically
 	v.AutomaticEnv()
 
-	v.SetConfigFile(".env")
-	_ = v.ReadInConfig()
+	// set prefix
+	v.SetEnvPrefix("flap")
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "__"))
 
-	var cfg Config
-
-	if err := bindEnvs(v, &cfg); err != nil {
-		return nil, err
+	// read configs
+	if err := v.ReadInConfig(); err != nil {
+		log.Printf("failed to read config file: %v\n", err)
 	}
 
+	var cfg Config
 	if err := v.Unmarshal(&cfg); err != nil {
 		return nil, err
 	}

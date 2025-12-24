@@ -41,8 +41,8 @@ func main() {
 	http.HandleFunc("/mutate", webhooks.MutatePods(codecs))
 
 	// listens to clear text http unless TLS env var is set to "true"
-	if cfg.TLS {
-		cmd.ServeHTTPS()
+	if cfg.TLS.Enable {
+		cmd.ServeHTTPS(cfg.TLS.CertPath, cfg.TLS.KeyPath)
 	} else {
 		cmd.ServeHTTP()
 	}
