@@ -35,13 +35,14 @@ func MutatePod(codecs serializer.CodecFactory, hookType string) func(http.Respon
 
 		// create a new admitter
 		adm := admission.Admitter{
-			Codecs:  codecs,
-			Logger:  logger,
-			Request: in.Request,
+			Codecs:   codecs,
+			Logger:   logger,
+			Request:  in.Request,
+			HookType: hookType,
 		}
 
 		// call the hook and store it in a review var
-		review := hooks.Hook(hookType, &adm)
+		review := hooks.Hook(&adm)
 
 		// return the admission review response
 		resp, err := json.Marshal(review)

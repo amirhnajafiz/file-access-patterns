@@ -10,9 +10,11 @@ import (
 	admissionv1 "k8s.io/api/admission/v1"
 )
 
-func Hook(hookType string, adm *admission.Admitter) *admissionv1.AdmissionReview {
+// Hook is the main handler function that accepts an admitter, calls the hook function
+// and returns the admission review.
+func Hook(adm *admission.Admitter) *admissionv1.AdmissionReview {
 	logger := adm.Logger.WithField("uid", adm.Request.UID)
-	logger.Debug("hooked")
+	logger.Info("hooked")
 
 	// get the pod, upon any errors skip it to unblock pod creation process
 	pod, err := adm.Pod()
@@ -29,8 +31,8 @@ func Hook(hookType string, adm *admission.Admitter) *admissionv1.AdmissionReview
 	// deep copy pod
 	mpod := pod.DeepCopy()
 
-	// select the hook based on input
-	switch hookType {
+	// select the hook handler from the hook type
+	switch adm.HookType {
 	case "create_pod":
 		hookOnPodCreate(mpod)
 	case "delete_pod":
@@ -44,6 +46,8 @@ func Hook(hookType string, adm *admission.Admitter) *admissionv1.AdmissionReview
 		return adm.ReviewResponse(false, http.StatusInternalServerError, err.Error())
 	}
 
+	logger.Debug(patch)
+
 	// convert to bytes
 	patchb, err := json.Marshal(patch)
 	if err != nil {
@@ -51,7 +55,7 @@ func Hook(hookType string, adm *admission.Admitter) *admissionv1.AdmissionReview
 		return adm.ReviewResponse(false, http.StatusInternalServerError, err.Error())
 	}
 
-	logger.Debug("unhooked")
+	logger.Info("unhooked")
 
 	return adm.PatchReviewResponse(patchb)
 }
