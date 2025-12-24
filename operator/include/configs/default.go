@@ -1,12 +1,14 @@
 package configs
 
-// Default returns a default config instance.
-func Default() Config {
-	var cfg Config
+import "github.com/spf13/viper"
 
-	cfg.LogLevel = "info"
-	cfg.JSONLog = false
-	cfg.TLS.Enable = false
+// Default returns a default viper instance.
+func Default() *viper.Viper {
+	v := viper.New()
 
-	return cfg
+	v.SetDefault("log_level", "info")
+	v.SetDefault("json_log", false)
+	v.SetDefault("tls.enable", false)
+
+	return v
 }

@@ -3,8 +3,6 @@ package configs
 import (
 	"log"
 	"strings"
-
-	"github.com/spf13/viper"
 )
 
 // Config hold the operator tune parameters.
@@ -21,7 +19,7 @@ type Config struct {
 
 // LoadConfigs reads the env variables into a Config struct.
 func LoadConfigs() (*Config, error) {
-	v := viper.New()
+	v := Default()
 
 	// read from `.env`
 	v.SetConfigFile(".env")
@@ -40,7 +38,7 @@ func LoadConfigs() (*Config, error) {
 	}
 
 	// unmarchal the configs into a config instance
-	cfg := Default()
+	var cfg Config
 	if err := v.Unmarshal(&cfg); err != nil {
 		return nil, err
 	}
