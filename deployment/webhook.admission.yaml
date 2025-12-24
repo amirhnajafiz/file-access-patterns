@@ -4,9 +4,6 @@ metadata:
   name: "flap-amirhnajafiz.github.io"
 webhooks:
   - name: "flap-amirhnajafiz.github.io"
-    namespaceSelector:
-      matchLabels:
-        admission-webhook: enabled
     rules:
       - apiGroups: [""]
         apiVersions: ["v1"]
@@ -15,8 +12,8 @@ webhooks:
         scope: "*"
     clientConfig:
       service:
-        namespace: default
-        name: flap-svc
+        namespace: flap-operator
+        name: flap-operator-service
         path: /mutate
         port: 443
       caBundle: |

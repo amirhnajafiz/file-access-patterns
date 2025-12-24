@@ -39,7 +39,8 @@ func LoadConfigs() (*Config, error) {
 		log.Printf("failed to read config file: %v\n", err)
 	}
 
-	var cfg Config
+	// unmarchal the configs into a config instance
+	cfg := Default()
 	if err := v.Unmarshal(&cfg); err != nil {
 		return nil, err
 	}
