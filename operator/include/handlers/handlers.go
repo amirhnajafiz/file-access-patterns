@@ -18,11 +18,11 @@ func Health(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "OK")
 }
 
-// MutateCreatePod mutates pods that are created.
-func MutateCreatePod(codecs serializer.CodecFactory) func(http.ResponseWriter, *http.Request) {
+// MutatePod is the webhook main mutation handler.
+func MutatePod(codecs serializer.CodecFactory, hookType string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// init a new logger instance with request uri
-		logger := logrus.WithField("uri", r.RequestURI)
+		logger := logrus.WithField("uri", r.RequestURI).WithField("hook", hookType)
 		logger.Debug("received mutation request")
 
 		// extract the admission request
@@ -41,47 +41,10 @@ func MutateCreatePod(codecs serializer.CodecFactory) func(http.ResponseWriter, *
 		}
 
 		// call the hook and store it in a review var
-		review := hooks.HookOnPodCreate(&adm)
+		review := hooks.Hook(hookType, &adm)
 
 		// return the admission review response
 		resp, err := json.Marshal(review)
-		if err != nil {
-			logger.Error(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		logger.Debug("replied mutation response")
-
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(resp)
-	}
-}
-
-// MutateDeletePod mutates pods that are deleted.
-func MutateDeletePod(codecs serializer.CodecFactory) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// init a new logger instance with request uri
-		logger := logrus.WithField("uri", r.RequestURI)
-		logger.Debug("received mutation request")
-
-		// extract the admission request
-		in, err := parseRequest(*r)
-		if err != nil {
-			logger.Error(err)
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		// create a new admitter
-		adm := admission.Admitter{
-			Codecs:  codecs,
-			Logger:  logger,
-			Request: in.Request,
-		}
-
-		// return the admission review response
-		resp, err := json.Marshal(adm)
 		if err != nil {
 			logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)

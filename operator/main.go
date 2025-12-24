@@ -37,7 +37,8 @@ func main() {
 
 	// register http handlers
 	http.HandleFunc("/health", handlers.Health)
-	http.HandleFunc("/mutate", handlers.MutateCreatePod(codecs))
+	http.HandleFunc("/mutate/crt", handlers.MutatePod(codecs, "create_pod"))
+	http.HandleFunc("/mutate/del", handlers.MutatePod(codecs, "delete_pod"))
 
 	// listens to clear text http unless TLS env var is set to "true"
 	if cfg.TLS.Enable {
